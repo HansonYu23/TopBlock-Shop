@@ -14,7 +14,8 @@ contract UserManagement {
     struct User {
         uint8 role;         // role for user 0: unregistered, 1: registered, 2: admin (possibly unneeded)
         uint256 balance;    // balance for user
-        Item[] items;       // array of items that the user owns, each item in the array is an Item struct
+        mapping(uint256 => Item) items; // array of items that the user owns, each item in the array is an Item struct
+        uint256 numItems;   // number of items the user currently owns
     }
 
     address private admin; // address of admin
@@ -27,7 +28,7 @@ contract UserManagement {
 
     constructor() {
         // set user as admin
-        roles[msg.sender] = 2;
+        users[msg.sender].role = 2;
         
         // create dummy item for default item in market to connect to
         Item memory item = Item({
@@ -38,15 +39,10 @@ contract UserManagement {
         market.push(item);
     }
 
-    // initialize the user with unregistered role, 0 initial balance, and no items
-    function initializeUser(address userAddress) public {
-        users[userAddress] = User(0, 0, new Item[](0));
-    }
-
     // registers the user of they are unregistered
     function registerUser() public returns (bool) {
-        if (roles[msg.sender] == 0) {
-            roles[msg.sender] = 1;
+        if (users[msg.sender].role == 0) {
+            users[msg.sender].role = 1;
             return true;
         }
         return false;
@@ -65,10 +61,11 @@ contract UserManagement {
     // adds item to user
     function addItemToUser(address userAddress, string memory itemName, uint256 itemValue) public {
         // Create a new Item
-        Item memory newItem = Item(itemName, itemValue, userAddress);
+        Item memory newItem = Item({name: itemName, value: itemValue, owner: userAddress});
 
-        // Add the item to the user's items array
-        users[userAddress].items.push(newItem);
+        // Add the item to the user's items array and increment number of items user owns
+        users[userAddress].items[users[userAddress].numItems] = newItem;
+        users[userAddress].numItems += 1;
     }
     
     // view role of user
@@ -81,9 +78,19 @@ contract UserManagement {
         return users[msg.sender].balance;
     }
 
-    // view all items that user owns
-    function viewItems() public view returns (Item[] memory) {
-        return users[msg.sender].items;
+    // function to get item details by item index
+    function getItem(address userAddress, uint256 itemIndex) public view returns (Item memory) {
+        require(itemIndex < users[userAddress].numItems, "Item index out of bounds");
+        return users[userAddress].items[itemIndex];
+    }
+
+    // function to return all items of a user
+    function getAllItems(address userAddress) public view returns (Item[] memory) {
+        Item[] memory items = new Item[](users[userAddress].numItems);
+        for (uint256 i = 0; i < users[userAddress].numItems; i++) {
+            items[i] = getItem(userAddress, i);
+        }
+        return items;
     }
 
 
