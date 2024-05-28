@@ -17,6 +17,15 @@ contract UserManagement {
         uint256 timePosted;  //block.timestamp of when item is listed
     }
 
+    struct PrintItem {
+        uint256 id;
+        string name;
+        string desc;
+        string category;
+        uint256 lowPrice;
+        uint256 highPrice;
+    }
+
     // struct to contain user information
     struct User {
         uint8 role;         // role for user 0: unregistered, 1: registered, 2: admin (possibly unneeded)
@@ -54,7 +63,6 @@ contract UserManagement {
             highPrice: 0,
             desc: "empty",
             category: "none",
-            itemType: 0,
             owner: address(0),
             currBid: 0,
             highestBidder: address(0),
@@ -131,12 +139,12 @@ contract UserManagement {
     }
 
     //view items in cart
-    function viewItemsInCart() public view returns ((uint256, string memory, string memory, string memory, uint256, uint256)[] memory) {
-        (uint256 length) = users[msg.sender].items.length;
-        (uint256, string memory, string memory, string memory, uint256, uint256)[] memory cartItems = new (uint256, string memory, string memory, string memory, uint256, uint256)[](length);
-       
+    function viewItemsInCart() public view returns (PrintItem[] memory) {
+        uint256 length = users[msg.sender].items.length;
+        PrintItem[] memory cartItems = new PrintItem[](length);
+
         for (uint256 i = 0; i < length; i++) {
-            cartItems[i] = (
+            cartItems[i] = PrintItem(
                 users[msg.sender].items[i].id,
                 users[msg.sender].items[i].name,
                 users[msg.sender].items[i].desc,
@@ -148,10 +156,9 @@ contract UserManagement {
         return cartItems;
     }
 
-    function viewCartItem(uint256 index) public view returns (uint256, string memory, string memory, string memory, uint256, uint256) {
-        require(index < users[msg.sender].items.length, "Index out of bounds");
+    function viewCartItem(uint256 index) public view returns (uint256 id, string memory name, string memory desc, string memory category, uint256 lowPrice, uint256 highPrice) {
         for (uint256 i = 0; i < users[msg.sender].items.length; i++) {
-            if (users[msg.sender].items[i].id == itemId) {
+            if (users[msg.sender].items[i].id == index) {
                 Item memory item = users[msg.sender].items[i];
                 return (
                     item.id,
@@ -191,7 +198,7 @@ contract UserManagement {
 
                     // Add the item to the user's items array and increment number of items in user cart
                     users[msg.sender].items.push(newItem);
-                    users[userAddress].numCart++;
+                    users[msg.sender].numCart++;
                 }
                 return true;   //successfull addition of n similar items
             }
@@ -378,12 +385,12 @@ contract UserManagement {
         }
     }
 
-    function viewMarket() public view returns ((uint256, string memory, string memory, string memory, uint256, uint256)[] memory) {
+    function viewMarket() public view returns (PrintItem[] memory) {
         uint256 length = market.length - 1;
-        (uint256, string memory, string memory, string memory, uint256, uint256)[] memory marketItems = new (uint256, string memory, string memory, string memory, uint256, uint256)[](length);
+        PrintItem[] memory marketItems = new PrintItem[](length);
 
         for (uint256 i = 1; i < market.length; i++) {
-            marketItems[i - 1] = (
+            marketItems[i - 1] = PrintItem(
                 market[i].id,
                 market[i].name,
                 market[i].desc,
@@ -411,7 +418,7 @@ contract UserManagement {
     // bid on an item
     function placeBid(uint256 bidAmount, uint256 index) public returns (bool) {
         if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
-            uint256 spot = spotInStore[index]
+            uint256 spot = spotInStore[index];
             if (spot > 0 && spot < market.length) {
                 Item storage item = market[spot];
 
@@ -422,7 +429,7 @@ contract UserManagement {
                         item.highestBidder = msg.sender;
                         item.currBid = bidAmount;
                         item.lowPrice = bidAmount;
-                        item.highPrice = item.highPrice > bidAmount * 1.2 ? item.highPrice : bidAmount * 1.2;
+                        item.highPrice = item.highPrice > bidAmount * 6 / 5 ? item.highPrice : bidAmount * 6 / 5;
                         users[msg.sender].currBids++;
                         return true;
                     }
@@ -474,10 +481,10 @@ contract UserManagement {
                         market.pop();
 
                         users[itemToCart.owner].numSale--;
-                        users[itemToCart.owner].balance += currBid;
-                        users[itemToCart.highestBidder].balance -= currBid;
+                        users[itemToCart.owner].balance += itemToCart.currBid;
+                        users[itemToCart.highestBidder].balance -= itemToCart.currBid;
 
-                        itemToCart.owner = highestBidder;
+                        itemToCart.owner = itemToCart.highestBidder;
                         itemToCart.timePosted = 0;
                         itemToCart.highestBidder = address(0);
                         itemToCart.currBid = 0;
