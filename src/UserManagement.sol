@@ -19,12 +19,12 @@ contract UserManagement {
 
     // struct to contain user information
     struct User {
-        uint8 role = 0;         // role for user 0: unregistered, 1: registered, 2: admin (possibly unneeded)
-        uint256 balance = 0;    // balance for user
-        Item[] items = []; // array of items that the user owns, each item in the array is an Item struct
-        uint256 numCart = 0;   // number of items in cart
-        uint256 numSale = 0;   //number of items in market
-        uint256 currBids = 0;   //number of items w user as highest bidder
+        uint8 role;         // role for user 0: unregistered, 1: registered, 2: admin (possibly unneeded)
+        uint256 balance;    // balance for user
+        Item[] items;       // array of items that the user owns, each item in the array is an Item struct
+        uint256 numCart;    // number of items in cart
+        uint256 numSale;    // number of items in market
+        uint256 currBids;   // number of items w user as highest bidder
     }
 
     address private admin; // address of admin
@@ -53,6 +53,7 @@ contract UserManagement {
             lowPrice: 0,
             highPrice: 0,
             desc: "empty",
+            category: "none",
             itemType: 0,
             owner: address(0),
             currBid: 0,
@@ -62,6 +63,8 @@ contract UserManagement {
         market.push(item);
     }
 
+
+    //REGISTRATION
     // registers the user of they are unregistered
     function registerUser() public returns (bool) {
         if (users[msg.sender].role == 0) {
@@ -70,7 +73,18 @@ contract UserManagement {
         }
         return false;
     }
+    // view role of user
+    function viewRole() public view returns (uint8) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            return users[msg.sender].role;
+        }
+        else {
+            return 0;
+        }
+    }
 
+
+    //BALANCES
     // adds balance to user
     function addBalance(uint256 amount) public returns (bool) {
         if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
@@ -82,7 +96,7 @@ contract UserManagement {
     }
 
     // removes balance to user
-    function removeBalance(uint256 amount) public returns (bool) {
+    function withdrawBalance(uint256 amount) public returns (bool) {
         if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
             if(users[msg.sender].balance >= amount) {
                 users[msg.sender].balance -= amount;
@@ -96,53 +110,401 @@ contract UserManagement {
         }
     }
 
-
-
-    // adds item to user
-    function addItem(string itemName, uint256 lowEnd, uint256 highEnd, string itemDesc, string itemType) public {
-        // Create a new Item
-        Item memory newItem = Item({name: itemName, value: itemValue, owner: userAddress});
-
-        // Add the item to the user's items array and increment number of items user owns
-        users[userAddress].items[users[userAddress].numItems] = newItem;
-        users[userAddress].numItems += 1;
-    }
-    
-    // view role of user
-    function viewRole() public view returns (uint8) {
-        return users[msg.sender].role;
-    }
-
     // view balance of user
     function viewBalance() public view returns (uint256) {
-        return users[msg.sender].balance;
-    }
-
-    // function to get item details by item index
-    function getItem(address userAddress, uint256 itemIndex) public view returns (Item memory) {
-        require(itemIndex < users[userAddress].numItems, "Item index out of bounds");
-        return users[userAddress].items[itemIndex];
-    }
-
-    // function to return all items of a user
-    function getAllItems(address userAddress) public view returns (Item[] memory) {
-        Item[] memory items = new Item[](users[userAddress].numItems);
-        for (uint256 i = 0; i < users[userAddress].numItems; i++) {
-            items[i] = getItem(userAddress, i);
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            return users[msg.sender].balance;
+        } else {
+            return 0;
         }
-        return items;
     }
 
 
-    // transfer balance from user to receiver 
-    function transferBalance(address receiverAddress, uint256 amount) public returns (bool){
-        if (users[msg.sender].balance >= amount){
-            users[msg.sender].balance -= amount;
-            users[receiverAddress].balance += amount;
-            return true;
+    //CART MANAGEMENT
+    // view cart size of user
+    function viewCartSize() public view returns (uint256) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            return users[msg.sender].numCart;
+        } else {
+            return 0;
+        }
+    }
+
+    //view items in cart
+    function viewItemsInCart() public view returns ((uint256, string memory, string memory, string memory, uint256, uint256)[] memory) {
+        (uint256 length) = users[msg.sender].items.length;
+        (uint256, string memory, string memory, string memory, uint256, uint256)[] memory cartItems = new (uint256, string memory, string memory, string memory, uint256, uint256)[](length);
+       
+        for (uint256 i = 0; i < length; i++) {
+            cartItems[i] = (
+                users[msg.sender].items[i].id,
+                users[msg.sender].items[i].name,
+                users[msg.sender].items[i].desc,
+                users[msg.sender].items[i].category,
+                users[msg.sender].items[i].lowPrice,
+                users[msg.sender].items[i].highPrice
+            );
+        }
+        return cartItems;
+    }
+
+    function viewCartItem(uint256 index) public view returns (uint256, string memory, string memory, string memory, uint256, uint256) {
+        require(index < users[msg.sender].items.length, "Index out of bounds");
+        for (uint256 i = 0; i < users[msg.sender].items.length; i++) {
+            if (users[msg.sender].items[i].id == itemId) {
+                Item memory item = users[msg.sender].items[i];
+                return (
+                    item.id,
+                    item.name,
+                    item.desc,
+                    item.category,
+                    item.lowPrice,
+                    item.highPrice
+                );
+            }
+        }
+    }
+
+    // adds item to user
+    function addItem(string memory itemName, uint256 lowEnd, uint256 highEnd, string memory itemDesc, string memory itemType, uint256 quantity) public returns (bool) {
+        
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            if(users[msg.sender].numCart + quantity < 100){
+                
+                for(uint256 i = 0; i < quantity; i++){
+                    // Create a new Item
+                    Item memory newItem = Item({
+                        id: itemIndex,
+                        name: itemName,
+                        lowPrice: lowEnd,
+                        highPrice: highEnd,
+                        desc: itemDesc,
+                        category: itemType,
+                        owner: msg.sender,
+                        currBid: 0,
+                        highestBidder: address(0),
+                        timePosted: 0
+                    });
+
+                    //increment global counter
+                    itemIndex++;
+
+                    // Add the item to the user's items array and increment number of items in user cart
+                    users[msg.sender].items.push(newItem);
+                    users[userAddress].numCart++;
+                }
+                return true;   //successfull addition of n similar items
+            }
+            else{
+                return false;    //too many items in cart
+            }
+        }
+        else {
+            return false;  //unregistered user
+        }
+    }
+
+    function editLowPrice(uint256 index, uint256 newLow) public returns (bool) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            for(uint256 i = 0; i < users[msg.sender].items.length; i++) {
+                if(users[msg.sender].items[i].id == index) {
+                    users[msg.sender].items[i].lowPrice = newLow;
+                    return true;
+                }
+            }
+            return false; //item idx not in cart
+        }
+        else {
+            return false; //unregistered user
+        }
+    }
+    function editHighPrice(uint256 index, uint256 newHigh) public returns (bool) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            for(uint256 i = 0; i < users[msg.sender].items.length; i++) {
+                if(users[msg.sender].items[i].id == index) {
+                    users[msg.sender].items[i].highPrice = newHigh;
+                    return true;
+                }
+            }
+            return false; //item idx not in cart
+        }
+        else {
+            return false; //unregistered user
+        }
+    }
+    function editDescr(uint256 index, string memory newDesc) public returns (bool) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            for(uint256 i = 0; i < users[msg.sender].items.length; i++) {
+                if(users[msg.sender].items[i].id == index) {
+                    users[msg.sender].items[i].desc = newDesc;
+                    return true;
+                }
+            }
+            return false; //item idx not in cart
+        }
+        else {
+            return false; //unregistered user
+        }
+    }
+    function editName(uint256 index, string memory newName) public returns (bool) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            for(uint256 i = 0; i < users[msg.sender].items.length; i++) {
+                if(users[msg.sender].items[i].id == index) {
+                    users[msg.sender].items[i].name = newName;
+                    return true;
+                }
+            }
+            return false; //item idx not in cart
+        }
+        else {
+            return false; //unregistered user
+        }
+    }
+    function editType(uint256 index, string memory newType) public returns (bool) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            for(uint256 i = 0; i < users[msg.sender].items.length; i++) {
+                if(users[msg.sender].items[i].id == index) {
+                    users[msg.sender].items[i].category = newType;
+                    return true;
+                }
+            }
+            return false; //item idx not in cart
+        }
+        else {
+            return false; //unregistered user
+        }
+    }
+
+    // deletes an item from the user's items array
+    function deleteItem(uint256 index) public returns (bool) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            for (uint256 i = 0; i < users[msg.sender].items.length; i++) {
+                if (users[msg.sender].items[i].id == index) {
+                    // remove item by swapping it with last element and popping array
+                    users[msg.sender].items[i] = users[msg.sender].items[users[msg.sender].items.length - 1];
+                    users[msg.sender].items.pop();
+                    users[msg.sender].numCart--;
+                    return true;
+                }
+            }
+            return false; //item idx not in cart
+        }
+        else {
+            return false; //unregistered user
+        }
+    }
+
+    //LISTING
+    // view number of items for sale by user
+    function viewSaleCount() public view returns (uint256) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            return users[msg.sender].numSale;
+        } else {
+            return 0;
+        }
+    }
+
+    //list item in market
+    function listCartItemToMarket(uint256 idx) public returns (bool) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            if(users[msg.sender].numSale < 50) {
+
+                for (uint256 i = 0; i < users[msg.sender].items.length; i++) {
+                    if (users[msg.sender].items[i].id == idx) {
+
+                        //find and remove item from cart
+                        Item memory itemToMarket = users[msg.sender].items[i];
+                        users[msg.sender].items[i] = users[msg.sender].items[users[msg.sender].items.length - 1];
+                        users[msg.sender].items.pop();
+                        users[msg.sender].numCart--;
+
+                        itemToMarket.timePosted = block.timestamp;  //set time
+                        market.push(itemToMarket);
+                        spotInStore[itemToMarket.id] = market.length - 1;
+                        users[msg.sender].numSale++;
+                        return true;
+                    }
+                }
+                return false; //idx not in user cart
+            }
+            else{
+                return false;  //too many items for sale already
+            }
         }
         else{
-            return false;
+            return false;  //unregistered user
+        }
+    }
+
+    //return to cart from market, cancel sale
+    function unlistItemFromMarket(uint256 index) public returns (bool) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            uint256 spot = spotInStore[index];
+            if (spot > 0 && spot < market.length) {
+                Item memory itemToCart = market[spot];
+
+                //replace with last element, fix index tracking, and delete
+                market[spot] = market[market.length - 1];
+                spotInStore[market[spot].id] = spot;
+                market.pop();
+
+                itemToCart.timePosted = 0;
+                itemToCart.highestBidder = address(0);
+                itemToCart.currBid = 0;
+
+                users[msg.sender].items.push(itemToCart);
+                users[msg.sender].numCart++;
+                users[msg.sender].numSale--;
+                spotInStore[index] = 0;
+
+                return true;
+            }
+            else{
+                return false;   //item not in market
+            }
+        }
+        else{
+            return false;      //unregistered user
+        }
+    }
+
+    //BUYING
+    // view number of active bids by user
+    function viewNumActiveBids() public view returns (uint256) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            return users[msg.sender].currBids;
+        } else {
+            return 0;
+        }
+    }
+
+    function viewMarket() public view returns ((uint256, string memory, string memory, string memory, uint256, uint256)[] memory) {
+        uint256 length = market.length - 1;
+        (uint256, string memory, string memory, string memory, uint256, uint256)[] memory marketItems = new (uint256, string memory, string memory, string memory, uint256, uint256)[](length);
+
+        for (uint256 i = 1; i < market.length; i++) {
+            marketItems[i - 1] = (
+                market[i].id,
+                market[i].name,
+                market[i].desc,
+                market[i].category,
+                market[i].lowPrice,
+                market[i].highPrice
+            );
+        }
+        return marketItems;
+    }
+    function viewMarketItem(uint256 index) public view returns (uint256, string memory, string memory, string memory, uint256, uint256) {
+        uint256 spot = spotInStore[index];
+        require(spot > 0 && spot < market.length, "Item not found in market");
+        Item memory item = market[spot];
+        return (
+            item.id,
+            item.name,
+            item.desc,
+            item.category,
+            item.lowPrice,
+            item.highPrice
+        );
+    }
+
+    // bid on an item
+    function placeBid(uint256 bidAmount, uint256 index) public returns (bool) {
+        if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            uint256 spot = spotInStore[index]
+            if (spot > 0 && spot < market.length) {
+                Item storage item = market[spot];
+
+                // check if bid amount is greater than current bid
+                if (bidAmount > item.currBid && msg.sender != item.owner) {
+                    if (users[msg.sender].balance >= bidAmount){
+                        users[item.highestBidder].currBids--;
+                        item.highestBidder = msg.sender;
+                        item.currBid = bidAmount;
+                        item.lowPrice = bidAmount;
+                        item.highPrice = item.highPrice > bidAmount * 1.2 ? item.highPrice : bidAmount * 1.2;
+                        users[msg.sender].currBids++;
+                        return true;
+                    }
+                    else{
+                        return false;    //not enough balance to cover
+                    }
+                }
+                else{
+                    return false;    // not highest bid or owner bid on their own
+                }
+            }
+            else{
+                return false;  //item not in market
+            }
+        }
+        else {
+            return false; //unregistered user
+        }
+    }
+
+    function handleExpiredItems() external {
+        for (uint256 i = market.length - 1; i >= 1; i--) {
+            if (block.timestamp - market[i].timePosted >= saleTime) {
+                if (market[i].currBid == 0 || market[i].highestBidder == address(0)) {
+                    // Item has no bids, return it to the owner's cart
+
+                    Item memory itemToCart = market[i];
+                    market[i] = market[market.length - 1];
+                    spotInStore[market[i].id] = i;
+                    market.pop();
+
+                    itemToCart.timePosted = 0;
+                    itemToCart.highestBidder = address(0);
+                    itemToCart.currBid = 0;
+
+                    users[itemToCart.owner].items.push(itemToCart);
+                    users[itemToCart.owner].numCart++;
+                    users[itemToCart.owner].numSale--;
+                    spotInStore[itemToCart.id] = 0;
+                } else {
+                    // Item has a highest bid
+                    //check adequeate balance
+
+                    Item memory itemToCart = market[i];
+                    if(users[itemToCart.highestBidder].balance >= itemToCart.currBid){
+                        //sufficient balance
+                        market[i] = market[market.length - 1];
+                        spotInStore[market[i].id] = i;
+                        market.pop();
+
+                        users[itemToCart.owner].numSale--;
+                        users[itemToCart.owner].balance += currBid;
+                        users[itemToCart.highestBidder].balance -= currBid;
+
+                        itemToCart.owner = highestBidder;
+                        itemToCart.timePosted = 0;
+                        itemToCart.highestBidder = address(0);
+                        itemToCart.currBid = 0;
+
+                        users[itemToCart.owner].items.push(itemToCart);
+                        users[itemToCart.owner].numCart++;
+                        users[itemToCart.owner].currBids--;
+                        spotInStore[itemToCart.id] = 0;
+                    }
+                    else {
+                        // not enough balance, send back to og owner
+                        market[i] = market[market.length - 1];
+                        spotInStore[market[i].id] = i;
+                        market.pop();
+
+                        users[itemToCart.highestBidder].currBids--;
+                        itemToCart.timePosted = 0;
+                        itemToCart.highestBidder = address(0);
+                        itemToCart.currBid = 0;
+
+                        users[itemToCart.owner].items.push(itemToCart);
+                        users[itemToCart.owner].numCart++;
+                        users[itemToCart.owner].numSale--;
+                        spotInStore[itemToCart.id] = 0;
+                    }
+                }
+            }
         }
     }
 
