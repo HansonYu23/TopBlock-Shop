@@ -17,35 +17,35 @@ contract UserManagementTest is Test {
 
         userManagement = new UserManagement();
 
-        vm.prank(admin);
+        vm.startPrank(admin);
         userManagement.registerUser();
+        vm.stopPrank();
     }
 
     function testRegisterUser() public {
-        vm.prank(user);
+        vm.startPrank(user);
         bool registered = userManagement.registerUser();
+        vm.stopPrank();
         assertEq(registered, true, "User should be registered");
     }
 
     function testAddItem() public {
-        vm.prank(user);
+        vm.startPrank(user);
         bool registered = userManagement.registerUser();
-        assertEq(registered, false,  "User should NOT be registered");
-        vm.prank(user);
         bool added = userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
-        assertEq(added, true, "Item should be added to the cart");
-
         uint256 cartSize = userManagement.viewCartSize();
+        vm.stopPrank();
+
+        assertEq(registered, true, "User should be registered");
+        assertEq(added, true, "Item should be added to the cart");
         assertEq(cartSize, 1, "Cart size should be 1");
     }
 
     function testEditItem() public {
-        vm.prank(user);
+        vm.startPrank(user);
         userManagement.registerUser();
-        vm.prank(user);
         userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
 
-        vm.prank(user);
         bool editedLowPrice = userManagement.editLowPrice(1, 150);
         bool editedHighPrice = userManagement.editHighPrice(1, 250);
         bool editedDesc = userManagement.editDescr(1, "An updated test item");
@@ -64,56 +64,52 @@ contract UserManagementTest is Test {
         assertEq(desc, "An updated test item", "Description should be updated");
         assertEq(name, "NewItem1", "Name should be updated");
         assertEq(category, "fashion", "Category should be updated");
+        vm.stopPrank();
+
     }
 
     function testListCartItemToMarket() public {
-        vm.prank(user);
+        vm.startPrank(user);
         userManagement.registerUser();
-        vm.prank(user);
         userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
 
-        vm.prank(user);
         bool listed = userManagement.listCartItemToMarket(1);
-        assertEq(listed, true, "Item should be listed in the market");
-
         uint256 saleCount = userManagement.viewSaleCount();
-        assertEq(saleCount, 1, "Sale count should be 1");
-
         UserManagement.PrintItem[] memory market = userManagement.viewMarket();
+        vm.stopPrank();
+
+        assertEq(listed, true, "Item should be listed in the market");
+        assertEq(saleCount, 1, "Sale count should be 1");
         assertEq(market.length, 1, "Market should have 1 item");
         assertEq(market[0].id, 1, "Market item ID should be 1");
     }
 
     function testUnlistItemFromMarket() public {
-        vm.prank(user);
+        vm.startPrank(user);
         userManagement.registerUser();
-        vm.prank(user);
         userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
-        vm.prank(user);
         userManagement.listCartItemToMarket(1);
 
-        vm.prank(user);
         bool unlisted = userManagement.unlistItemFromMarket(1);
-        assertEq(unlisted, true, "Item should be unlisted from the market");
-
         uint256 saleCount = userManagement.viewSaleCount();
-        assertEq(saleCount, 0, "Sale count should be 0");
-
         uint256 cartSize = userManagement.viewCartSize();
+        vm.stopPrank();
+
+        assertEq(unlisted, true, "Item should be unlisted from the market");
+        assertEq(saleCount, 0, "Sale count should be 0");
         assertEq(cartSize, 1, "Cart size should be 1");
     }
 
     function testDeleteItem() public {
-        vm.prank(user);
+        vm.startPrank(user);
         userManagement.registerUser();
-        vm.prank(user);
         userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
 
-        vm.prank(user);
         bool deleted = userManagement.deleteItem(1);
-        assertEq(deleted, true, "Item should be deleted from the cart");
-
         uint256 cartSize = userManagement.viewCartSize();
+        vm.stopPrank();
+
+        assertEq(deleted, true, "Item should be deleted from the cart");
         assertEq(cartSize, 0, "Cart size should be 0");
     }
 }
