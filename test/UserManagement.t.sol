@@ -22,12 +22,88 @@ contract UserManagementTest is Test {
         vm.stopPrank();
     }
 
+    //FUNCTIONAL: A user can register as both buyer and seller
+
     function testRegisterUser() public {
         vm.startPrank(user);
         bool registered = userManagement.registerUser();
+        uint8 role = userManagement.viewRole();
         vm.stopPrank();
         assertEq(registered, true, "User should be registered");
+        assertEq(role, 1, "User's role should be 1");
     }
+
+    //SECURITY: A registered user cannot re-register (Constant registration can allow masked addresses to take malicious actions)
+    function sec_UserRegistersTwice() public {
+        vm.startPrank(user);
+        userManagement.registerUser();
+        bool reg2 = userManagement.registerUser();
+        vm.stopPrank();
+        assertEq(reg2, false, "User was allowed to register");
+    }
+
+    // FUNCTIONAL: Add balance to user with correct role
+    function testAddBalance() public {
+        vm.startPrank(user);
+        userManagement.registerUser();
+        bool result = userManagement.addBalance(100);
+        uint256 balance = userManagement.viewBalance();
+        vm.stopPrank();
+
+        assertEq(result, true, "Balance deposit failed");
+        assertEq(balance, 100, "Balance should be 100");
+    }
+
+    // SECURITY: Add balance to user with incorrect role (Unauthorized user should not be able to modify balance)
+    function testAddBalanceUnauthorized() public {
+        vm.startPrank(otherUser);
+        bool result = userManagement.addBalance(100);
+        uint256 balance = userManagement.viewBalance();
+        vm.stopPrank();
+
+        assertEq(result, false, "Unauthorized user should not be able to add balance");
+        assertEq(balance, 0, "Balance should remain 0 for unauthorized user");
+    }
+
+    // FUNCTIONAL: Withdraw balance from user with sufficient balance
+    function testWithdrawBalance() public {
+        vm.startPrank(user);
+        userManagement.registerUser();
+        userManagement.addBalance(100);
+        bool result = userManagement.withdrawBalance(50);
+        uint256 balance = userManagement.viewBalance();
+        vm.stopPrank();
+
+        assertEq(result, true, "Balance should be withdrawn successfully");
+        assertEq(balance, 50, "Balance should be 50 after withdrawal");
+    }
+
+    // SECURITY: Withdraw balance from user with insufficient balance (User cannot take more money than they have)
+    function testWithdrawInsufficientBalance() public {
+        // Register the user
+        vm.startPrank(user);
+        userManagement.registerUser();
+        userManagement.addBalance(50);
+        bool result = userManagement.withdrawBalance(100);
+        uint256 balance = userManagement.viewBalance();
+        vm.stopPrank();
+
+        assertEq(result, false, "Withdrawal should fail due to insufficient balance");
+        assertEq(balance, 50, "Balance should remain 50 after failed withdrawal");
+    }
+
+    // SECURITY: Withdraw balance from unauthorized user
+    function testWithdrawBalanceUnauthorized() public {
+        vm.startPrank(otherUser);
+        bool result = userManagement.withdrawBalance(50);
+        uint256 balance = userManagement.viewBalance();
+        vm.stopPrank();
+
+        assertEq(result, false, "Unauthorized user should not be able to withdraw balance");
+        assertEq(balance, 0, "Balance should remain 0 for unauthorized user");
+    }
+
+
 
     function testAddItem() public {
         vm.startPrank(user);
