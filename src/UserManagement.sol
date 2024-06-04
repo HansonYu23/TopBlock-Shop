@@ -423,7 +423,7 @@ contract UserManagement {
                 Item storage item = market[spot];
 
                 // check if bid amount is greater than current bid
-                if (bidAmount > item.currBid && msg.sender != item.owner) {
+                if (bidAmount > item.currBid && msg.sender != item.owner && users[msg.sender].currBids < 15) {
                     if (users[msg.sender].balance >= bidAmount){
                         users[item.highestBidder].currBids--;
                         item.highestBidder = msg.sender;
