@@ -222,7 +222,7 @@ contract UserManagementSanjana {
             invoices[invoiceAddress].remainingAmount -= payAmount;
             addr2invoice[msg.sender] = invoices.length - 1;
             return true;
-        }else {
+        } else {
             return false;
         }
     }

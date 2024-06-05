@@ -356,12 +356,13 @@ contract UserManagementTest is Test {
         assertEq(items.length, 4, "Market should contain all items from both users");
     }
 
-    function testUnlistItemFromMarket() public {
+
+    // FUNCTIONAL: unlistItemFromMarket - successful removal from market
+    function testUnlistItemFromMarketSuccess() public {
         vm.startPrank(user);
         userManagement.registerUser();
-        userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
+        userManagement.addItem("Item1", 100, 200, "Test item 1", "tech", 1);
         userManagement.listCartItemToMarket(1);
-
         bool unlisted = userManagement.unlistItemFromMarket(1);
         uint256 saleCount = userManagement.viewSaleCount();
         uint256 cartSize = userManagement.viewCartSize();
@@ -371,4 +372,20 @@ contract UserManagementTest is Test {
         assertEq(saleCount, 0, "Sale count should be 0");
         assertEq(cartSize, 1, "Cart size should be 1");
     }
+
+    // SECURITY: unlistItemFromMarket - unauthorized user
+    function testUnlistItemFromMarketUnauthorized() public {
+        vm.startPrank(user);
+        userManagement.registerUser();
+        userManagement.addItem("Item1", 100, 200, "Test item 1", "tech", 1);
+        userManagement.listCartItemToMarket(1);
+        vm.stopPrank();
+
+        vm.startPrank(otherUser);
+        userManagement.registerUser();
+        bool unlisted = userManagement.unlistItemFromMarket(1);
+        vm.stopPrank();
+        assertEq(unlisted, false, "Unregistered user should not be able to unlist item from market");
+    }
+
 }

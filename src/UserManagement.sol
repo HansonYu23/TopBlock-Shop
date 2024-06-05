@@ -348,10 +348,8 @@ contract UserManagement {
     function unlistItemFromMarket(uint256 index) public returns (bool) {
         if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
             uint256 spot = spotInStore[index];
-            if (spot > 0 && spot < market.length) {
+            if (spot > 0 && spot < market.length && market[spot].owner == msg.sender) {
                 Item memory itemToCart = market[spot];
-
-                //replace with last element, fix index tracking, and delete
                 market[spot] = market[market.length - 1];
                 spotInStore[market[spot].id] = spot;
                 market.pop();
@@ -368,7 +366,7 @@ contract UserManagement {
                 return true;
             }
             else{
-                return false;   //item not in market
+                return false;   //item not in market, or not owner
             }
         }
         else{
