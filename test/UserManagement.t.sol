@@ -388,4 +388,16 @@ contract UserManagementTest is Test {
         assertEq(unlisted, false, "Unregistered user should not be able to unlist item from market");
     }
 
+    // FUNCTIONAL: unlistItemFromMarket with index out of range
+    function testUnlistItemFromMarketOutOfRange() public {
+        vm.startPrank(user);
+        userManagement.registerUser();
+        userManagement.addItem("Item1", 100, 200, "Test item 1", "tech", 1);
+        userManagement.listCartItemToMarket(1);
+        bool success = userManagement.unlistItemFromMarket(99);
+        vm.stopPrank();
+
+        assertEq(success, false, "Unlisting item with index out of range should fail");
+    }
+
 }
