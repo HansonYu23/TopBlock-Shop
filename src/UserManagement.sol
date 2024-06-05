@@ -170,6 +170,7 @@ contract UserManagement {
                 );
             }
         }
+        return (0, "", "", "", 0, 0);
     }
 
     // adds item to user
@@ -401,7 +402,7 @@ contract UserManagement {
         }
         return marketItems;
     }
-    function viewMarketItem(uint256 index) public view returns (uint256, string memory, string memory, string memory, uint256, uint256) {
+    function viewMarketItem(uint256 index) public view returns (uint256, string memory, string memory, string memory, uint256, uint256, uint256) {
         uint256 spot = spotInStore[index];
         require(spot > 0 && spot < market.length, "Item not found in market");
         Item memory item = market[spot];
@@ -411,7 +412,8 @@ contract UserManagement {
             item.desc,
             item.category,
             item.lowPrice,
-            item.highPrice
+            item.highPrice,
+            item.timePosted
         );
     }
 

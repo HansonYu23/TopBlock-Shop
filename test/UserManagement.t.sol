@@ -302,21 +302,58 @@ contract UserManagementTest is Test {
         assertEq(s, 1, "Cart size should remain unchanged");
     }
 
-
-    function testListCartItemToMarket() public {
+    // FUNCTIONAL: List item to market successfully
+    function testListToMarket() public {
         vm.startPrank(user);
         userManagement.registerUser();
-        userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
-
-        bool listed = userManagement.listCartItemToMarket(1);
-        uint256 saleCount = userManagement.viewSaleCount();
-        UserManagement.PrintItem[] memory market = userManagement.viewMarket();
+        userManagement.addItem("Item", 100, 200, "A test item", "tech", 5);
+        bool listResult = userManagement.listCartItemToMarket(3);
+        (uint256 id, string memory name, string memory desc, string memory category, uint256 lowPrice, uint256 highPrice, uint256 timePosted) = userManagement.viewMarketItem(3);
+        uint256 cartSize = userManagement.viewCartSize();
+        uint256 marketSize = userManagement.viewSaleCount();
+        UserManagement.PrintItem[] memory items = userManagement.viewItemsInCart();
         vm.stopPrank();
 
-        assertEq(listed, true, "Item should be listed in the market");
-        assertEq(saleCount, 1, "Sale count should be 1");
-        assertEq(market.length, 1, "Market should have 1 item");
-        assertEq(market[0].id, 1, "Market item ID should be 1");
+        assertEq(listResult, true, "Item should be listed to the market successfully");
+        assertGt(timePosted, 0, "Timestamp should be set for the listed item");
+        assertEq(cartSize, 4, "Cart size should be decreased by 1 after listing to market");
+        assertEq(items.length, 4, "Cart size should be 4");
+        assertEq(marketSize, 1, "Market size should be increased by 1 after listing to market");
+    }
+
+    // FUNCTIONAL: Attempt to list item with incorrect index (Expect failure)
+    function testListIncorrectIndex() public {
+        vm.startPrank(user);
+        userManagement.registerUser();
+        userManagement.addItem("Item", 100, 200, "Test item", "tech", 1);
+        bool listResult = userManagement.listCartItemToMarket(2);
+        uint256 cartSize = userManagement.viewCartSize();
+        vm.stopPrank();
+
+        assertEq(listResult, false, "Listing item to market with incorrect index should fail");
+        assertEq(cartSize, 1, "Cart size should remain 1 after failed listing to market");
+    }
+
+    //FUNCTIONAL: view all items in market
+    function testViewMarket() public {
+        vm.startPrank(user);
+        userManagement.registerUser();
+        userManagement.addItem("Item1", 100, 200, "Test item 1", "tech", 1);
+        userManagement.addItem("Item2", 150, 250, "Test item 2", "fashion", 1);
+        userManagement.listCartItemToMarket(1);
+        userManagement.listCartItemToMarket(2);
+        vm.stopPrank();
+
+        vm.startPrank(otherUser);
+        userManagement.registerUser();
+        userManagement.addItem("Item3", 200, 300, "Test item 3", "food", 1);
+        userManagement.addItem("Item4", 250, 350, "Test item 4", "books", 1);
+        userManagement.listCartItemToMarket(3);
+        userManagement.listCartItemToMarket(4);
+        UserManagement.PrintItem[] memory items = userManagement.viewMarket();
+        vm.stopPrank();
+
+        assertEq(items.length, 4, "Market should contain all items from both users");
     }
 
     function testUnlistItemFromMarket() public {
