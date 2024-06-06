@@ -312,8 +312,74 @@ contract UserManagement {
         }
     }
 
+    function handleExpiredItems() external {
+        for (uint256 i = market.length - 1; i >= 1; i--) {
+            if (block.timestamp - market[i].timePosted >= saleTime) {
+                if (market[i].currBid == 0 || market[i].highestBidder == address(0)) {
+                    // Item has no bids, return it to the owner's cart
+
+                    Item memory itemToCart = market[i];
+                    market[i] = market[market.length - 1];
+                    spotInStore[market[i].id] = i;
+                    market.pop();
+
+                    itemToCart.timePosted = 0;
+                    itemToCart.highestBidder = address(0);
+                    itemToCart.currBid = 0;
+
+                    users[itemToCart.owner].items.push(itemToCart);
+                    users[itemToCart.owner].numCart++;
+                    users[itemToCart.owner].numSale--;
+                    spotInStore[itemToCart.id] = 0;
+                } else {
+                    // Item has a highest bid
+                    //check adequeate balance
+
+                    Item memory itemToCart = market[i];
+                    if(users[itemToCart.highestBidder].balance >= itemToCart.currBid){
+                        //sufficient balance
+                        market[i] = market[market.length - 1];
+                        spotInStore[market[i].id] = i;
+                        market.pop();
+
+                        users[itemToCart.owner].numSale--;
+                        users[itemToCart.owner].balance += itemToCart.currBid;
+                        users[itemToCart.highestBidder].balance -= itemToCart.currBid;
+
+                        itemToCart.owner = itemToCart.highestBidder;
+                        itemToCart.timePosted = 0;
+                        itemToCart.highestBidder = address(0);
+                        itemToCart.currBid = 0;
+
+                        users[itemToCart.owner].items.push(itemToCart);
+                        users[itemToCart.owner].numCart++;
+                        users[itemToCart.owner].currBids--;
+                        spotInStore[itemToCart.id] = 0;
+                    }
+                    else {
+                        // not enough balance, send back to og owner
+                        market[i] = market[market.length - 1];
+                        spotInStore[market[i].id] = i;
+                        market.pop();
+
+                        users[itemToCart.highestBidder].currBids--;
+                        itemToCart.timePosted = 0;
+                        itemToCart.highestBidder = address(0);
+                        itemToCart.currBid = 0;
+
+                        users[itemToCart.owner].items.push(itemToCart);
+                        users[itemToCart.owner].numCart++;
+                        users[itemToCart.owner].numSale--;
+                        spotInStore[itemToCart.id] = 0;
+                    }
+                }
+            }
+        }
+    }
+
     //list item in market
     function listCartItemToMarket(uint256 idx) public returns (bool) {
+        this.handleExpiredItems();
         if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
             if(users[msg.sender].numSale < 50) {
 
@@ -346,6 +412,7 @@ contract UserManagement {
 
     //return to cart from market, cancel sale
     function unlistItemFromMarket(uint256 index) public returns (bool) {
+        this.handleExpiredItems();
         if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
             uint256 spot = spotInStore[index];
             if (spot > 0 && spot < market.length && market[spot].owner == msg.sender) {
@@ -417,6 +484,7 @@ contract UserManagement {
 
     // bid on an item
     function placeBid(uint256 bidAmount, uint256 index) public returns (bool) {
+        this.handleExpiredItems();
         if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
             uint256 spot = spotInStore[index];
             if (spot > 0 && spot < market.length) {
@@ -449,70 +517,4 @@ contract UserManagement {
             return false; //unregistered user
         }
     }
-
-    function handleExpiredItems() external {
-        for (uint256 i = market.length - 1; i >= 1; i--) {
-            if (block.timestamp - market[i].timePosted >= saleTime) {
-                if (market[i].currBid == 0 || market[i].highestBidder == address(0)) {
-                    // Item has no bids, return it to the owner's cart
-
-                    Item memory itemToCart = market[i];
-                    market[i] = market[market.length - 1];
-                    spotInStore[market[i].id] = i;
-                    market.pop();
-
-                    itemToCart.timePosted = 0;
-                    itemToCart.highestBidder = address(0);
-                    itemToCart.currBid = 0;
-
-                    users[itemToCart.owner].items.push(itemToCart);
-                    users[itemToCart.owner].numCart++;
-                    users[itemToCart.owner].numSale--;
-                    spotInStore[itemToCart.id] = 0;
-                } else {
-                    // Item has a highest bid
-                    //check adequeate balance
-
-                    Item memory itemToCart = market[i];
-                    if(users[itemToCart.highestBidder].balance >= itemToCart.currBid){
-                        //sufficient balance
-                        market[i] = market[market.length - 1];
-                        spotInStore[market[i].id] = i;
-                        market.pop();
-
-                        users[itemToCart.owner].numSale--;
-                        users[itemToCart.owner].balance += itemToCart.currBid;
-                        users[itemToCart.highestBidder].balance -= itemToCart.currBid;
-
-                        itemToCart.owner = itemToCart.highestBidder;
-                        itemToCart.timePosted = 0;
-                        itemToCart.highestBidder = address(0);
-                        itemToCart.currBid = 0;
-
-                        users[itemToCart.owner].items.push(itemToCart);
-                        users[itemToCart.owner].numCart++;
-                        users[itemToCart.owner].currBids--;
-                        spotInStore[itemToCart.id] = 0;
-                    }
-                    else {
-                        // not enough balance, send back to og owner
-                        market[i] = market[market.length - 1];
-                        spotInStore[market[i].id] = i;
-                        market.pop();
-
-                        users[itemToCart.highestBidder].currBids--;
-                        itemToCart.timePosted = 0;
-                        itemToCart.highestBidder = address(0);
-                        itemToCart.currBid = 0;
-
-                        users[itemToCart.owner].items.push(itemToCart);
-                        users[itemToCart.owner].numCart++;
-                        users[itemToCart.owner].numSale--;
-                        spotInStore[itemToCart.id] = 0;
-                    }
-                }
-            }
-        }
-    }
-
 }
