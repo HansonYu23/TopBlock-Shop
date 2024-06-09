@@ -9,6 +9,61 @@ $ forge test
 
 ## Function Information
 
+### registerUser()
+**Use:** Register's the user <br />
+**In:** None <br />
+**Out:** Returns true if registered successfully, false otherwise <br />
+
+### viewRole()
+**Use:** Shows the user's role <br />
+**In:** None <br />
+**Out:** Returns the user's role (0 unregistered, 1 registered, 2 admin) <br />
+
+### addBalance(uint256 amount)
+**Use:** Add to the user's balance amount <br />
+**In:** Amount to be withdrawn <br />
+**Out:** Returns true if added successfully, returns false if unregistered <br />
+
+### withdrawBalance(uint256 amount)
+**Use:** Withdraw from the user's balance amount <br />
+**In:** Amount to be withdrawn <br />
+**Out:** Returns true if withdrawn successfully, returns false otherwise <br />
+
+### viewBalance()
+**Use:** Shows the user's balance amount <br />
+**In:** None <br />
+**Out:** Returns the user's balance, returns 0 if the caller is not registered <br />
+
+### viewCartSize()
+**Use:** Shows the number of items that the caller has in personal cart <br />
+**In:** None <br />
+**Out:** Returns the number of items that the caller has in cart, returns 0 if the caller is not registered <br />
+
+### viewItemsInCart()
+**Use:** View all items from the items array of the caller<br />
+**In:** None <br />
+**Out:** Returns (id, name, desc, category, lowPrice, and highPrice) of all items within the cart <br />
+
+### viewCartItem(uint256 index)
+**Use:** View an item from the items array of the caller<br />
+**In:** Takes in the index of the item to be viewed <br />
+**Out:** Returns (id, name, desc, category, lowPrice, and highPrice) of the item if it exists within the cart <br />
+
+### addItem(string itemName, uint256 lowEnd, uint256 highEnd, string itemDesc, string itemType, uint256 quantity)
+**Use:** Adds quantity amount of items into the items array of the caller with the corresponding item information <br />
+**In:** Takes in the index of the item to be edited and the new value<br />
+**Out:** Returns true if the items are successfully added, returns false if the items are unable to be added or if the caller is not registered <br />
+
+
+### editLowPrice(uint256 index, uint256 newLow)
+### editHighPrice(uint256 index, uint256 newHigh)
+### editDescr(uint256 index, string newDesc)
+### editName(uint256 index, string newName)
+### editType(uint256 index, string newType)
+**Use:** Edits an item in the items array of the caller <br />
+**In:** Takes in the index of the item to be edited and the new value<br />
+**Out:** Returns true if the item is successfully edited, returns false if the item is not found or if the caller is not registered <br />
+
 ### deleteItem(uint256 index)
 **Use:** Deletes an item from the items array of the caller <br />
 **In:** Takes in the index of the item to be deleted <br />
@@ -38,7 +93,7 @@ there are no active bids or if the current highest bidder does not have sufficie
 ### viewNumActiveBids()
 **Use:** Shows the number of active bids the caller has <br />
 **In:** None <br />
-**Out:** Returns the number of active bides the caller has, returns 0 if the caller is unregistered <br />
+**Out:** Returns the number of active bids the caller has, returns 0 if the caller is unregistered <br />
 
 ### viewMarket()
 **Use:** Shows the items for sale in the market <br />
