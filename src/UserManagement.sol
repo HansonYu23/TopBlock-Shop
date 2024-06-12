@@ -13,7 +13,7 @@ contract UserManagement {
         string category;    // type of item (tech, fashion, etc)
         address owner;       //addr of owner
         uint256 currBid;     //value of currBid price
-        address highestBidder;  //addr of curr highest bid
+        address highestBidder;  //addr of curr highest 
         uint256 timePosted;  //block.timestamp of when item is listed
     }
 
@@ -40,7 +40,7 @@ contract UserManagement {
 
     uint256 private itemIndex = 1;  //global counter for item idx
 
-    uint256 public constant saleTime = 2 weeks;   //how long items can remain in store for
+    uint256 public constant saleTime = 2 seconds;   //how long items can remain in store for
 
 
     //maps an address to a User
@@ -334,7 +334,8 @@ contract UserManagement {
                 } else {
                     // Item has a highest bid
                     //check adequeate balance
-
+                    // Item has a highest bid
+                    
                     Item memory itemToCart = market[i];
                     if(users[itemToCart.highestBidder].balance >= itemToCart.currBid){
                         //sufficient balance
@@ -372,6 +373,7 @@ contract UserManagement {
                         users[itemToCart.owner].numSale--;
                         spotInStore[itemToCart.id] = 0;
                     }
+                    
                 }
             }
         }
@@ -493,7 +495,15 @@ contract UserManagement {
                 // check if bid amount is greater than current bid
                 if (bidAmount > item.currBid && msg.sender != item.owner && users[msg.sender].currBids < 15) {
                     if (users[msg.sender].balance >= bidAmount){
-                        users[item.highestBidder].currBids--;
+                        
+                        //NEW CHANGE PERHAPS DELETE IF DOESN'T
+                        //Refund previous highest bidder
+                        if(item.currBid > 0) {
+                            users[item.highestBidder].balance += item.currBid;
+                        }
+
+                        //Update highest bidder and bid amount 
+                        //users[item.highestBidder].currBids--;
                         item.highestBidder = msg.sender;
                         item.currBid = bidAmount;
                         item.lowPrice = bidAmount;

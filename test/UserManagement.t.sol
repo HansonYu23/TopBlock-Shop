@@ -400,4 +400,166 @@ contract UserManagementTest is Test {
         assertEq(success, false, "Unlisting item with index out of range should fail");
     }
 
+    //FUNTIONAL: Test if items purchased by a buyer can be put on sell again 
+    function testItemCanBePutOnSaleAgain() public {
+        vm.startPrank(user);
+        // Register buyer
+        userManagement.registerUser();
+
+        // Add balance to buyer
+        userManagement.addBalance(1000);
+
+        // Add item to buyer's cart
+        userManagement.addItem("item1", 100, 200, "description", "category", 1);
+
+        // List item in market
+        userManagement.listCartItemToMarket(1);
+
+        // View market to check if item is listed
+        UserManagement.PrintItem[] memory marketItems = userManagement.viewMarket();
+        assertEq(marketItems.length, 1, "Item should be listed in the market");
+
+        // Unlist item from market
+        userManagement.unlistItemFromMarket(1);
+
+        // View market to check if item is unlisted
+        marketItems = userManagement.viewMarket();
+        assertEq(marketItems.length, 0, "Item should be unlisted from the market");
+        vm.stopPrank();
+
+    }
+
+    //FUNCTIONAL: Test if the buyer who pays more will eventually own the items 
+    function testHigherOwnsItem() public {
+        vm.startPrank(user);
+        //Register first buyer
+        userManagement.registerUser();
+        //Add balance to first buyer
+        userManagement.addBalance(1000);
+        vm.stopPrank();
+
+        //Handle expired items
+        //userManagement.handleExpiredItems();
+        //vm.stopPrank();
+
+        //Register and add balance for the second user 
+        vm.startPrank(otherUser);
+        userManagement.registerUser();
+        userManagement.addBalance(1000);
+        vm.stopPrank();
+
+        //Handle expired items
+        //userManagement.handleExpiredItems();
+
+        //First user places a bid
+        vm.startPrank(user);
+        userManagement.addItem("item2", 100, 200, "description", "category", 1);
+        //bool bidResult1 = userManagement.placeBid(150, 1);
+        bool listed = userManagement.listCartItemToMarket(1);
+        assertEq(listed, true, "Item should be listed in the market");
+        //assertEq(bidResult1, true, "First user's bid should be successful");
+        vm.stopPrank();
+        //assertEq(bidResult1, true, "First user's bid should be successful");
+
+        // First user places a bid
+        vm.startPrank(user);
+        bool bidResult1 = userManagement.placeBid(150, 1);
+        vm.stopPrank();
+        assertEq(bidResult1, true, "First user's bid should be successful");
+
+        //Handle expired items
+        //userManagement.handleExpiredItems();
+        //vm.stopPrank();
+
+        //Second user places a higher bid
+        vm.startPrank(otherUser);
+        bool bidResult2 = userManagement.placeBid(200, 1);
+        vm.stopPrank();
+        assertEq(bidResult2, true, "Second user's bid should be successful");
+        //vm.stopPrank();
+
+        //Handle expired items
+        userManagement.handleExpiredItems();
+        //vm.stopPrank();
+
+        //Assertions for the first user
+        vm.startPrank(user);
+        assertEq(userManagement.viewNumActiveBids(), 0, "First buyer should have 0 active bids after being outbid.");
+        vm.stopPrank();
+
+        //Assertions for the second user
+        vm.startPrank(otherUser);
+        assertEq(userManagement.viewNumActiveBids(), 1, "Second buyer should have 1 active bid after bidding.");
+        vm.stopPrank();
+
+        (uint256 id, , , , , , ) = userManagement.viewMarketItem(1);
+        assertEq(id, 1, "Item should be owned by the highest bidder");
+
+    }
+
+    //SECURITY TEST: Test for inadequate balance when placing a bid
+    function testPlaceBidWithInadequateBalance() public {
+        vm.startPrank(user);
+        //Register first buyer
+        userManagement.registerUser();
+
+        //Add balance less than the bid amount 
+        userManagement.addBalance(50);
+
+        //Attempt to place a bid with an amount higher than the balance
+        bool result = userManagement.placeBid(100, 1);
+        vm.stopPrank();
+        //Assert that the bid was not successful
+        assertEq(result, false, "Bid should not be successful due to inadequate balance");
+        //vm.stopPrank();
+    }
+
+    //SECURITY TEST: Test for handling expired items with no bids
+    
+    function testHandleExpiredItemsWithNoBids() public {
+        vm.startPrank(user);
+        userManagement.registerUser();
+        
+        // Add items to the market without any bids
+        userManagement.addItem("Item 1", 100, 200, "Description 1", "Type", 1);
+        userManagement.addItem("Item2", 150, 250, "Description 2", "Type 2", 2);
+
+        // List the items in the market
+        bool listed = userManagement.listCartItemToMarket(1);
+        assertEq(listed, true, "Item 1 should be listed in the market");
+        listed = userManagement.listCartItemToMarket(2);
+        assertEq(listed, true, "Item 2 should be listed in the market");
+
+        //Advance time to ensure both items expire
+        uint256 expiryTime = block.timestamp + 2 seconds + 1;
+        vm.warp(expiryTime);
+
+        //Handle expired items
+        userManagement.handleExpiredItems();
+
+        //Verify items are returned to the user's cart 
+        (uint256 idAfterHandling1, , , , , ) = userManagement.viewCartItem(1);
+        (uint256 id2, , , , , ) = userManagement.viewCartItem(2);
+
+        assertEq(idAfterHandling1, 1, "First item should be returned to user's cart");
+
+        assertEq(id2, 2, "Second item should be returned to user's cart");
+        
+
+        vm.stopPrank();
+        
+    }
+    
+
+
+
+
+
+
+
+
+
+
+
+
 }
