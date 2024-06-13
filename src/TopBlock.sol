@@ -73,6 +73,9 @@ contract TopBlock {
         market.push(item);
     }
 
+    function viewTime() public view returns (uint256) {
+        return actionCounter;
+    }
 
     //REGISTRATION
     // registers the user of they are unregistered
