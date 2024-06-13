@@ -60,14 +60,15 @@ $ forge test
 **Out:** Returns true if the items are successfully added, returns false if the items are unable to be added or if the caller is not registered <br />
 
 
-### editLowPrice(uint256 index, uint256 newLow)
-### editHighPrice(uint256 index, uint256 newHigh)
-### editDescr(uint256 index, string newDesc)
-### editName(uint256 index, string newName)
-### editType(uint256 index, string newType)
+### Edit Functions
 **Use:** Edits an item in the items array of the caller <br />
 **In:** Takes in the index of the item to be edited and the new value <br />
 **Out:** Returns true if the item is successfully edited, returns false if the item is not found or if the caller is not registered <br />
+editLowPrice(uint256 index, uint256 newLow)
+editHighPrice(uint256 index, uint256 newHigh)
+editDescr(uint256 index, string newDesc)
+editName(uint256 index, string newName)
+editType(uint256 index, string newType)
 
 ### deleteItem(uint256 index)
 **Use:** Deletes an item from the items array of the caller <br />
