@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-contract UserManagement {
+contract TopBlock {
 
     // struct to contain item information
     struct Item {
@@ -13,7 +13,7 @@ contract UserManagement {
         string category;    // type of item (tech, fashion, etc)
         address owner;       //addr of owner
         uint256 currBid;     //value of currBid price
-        address highestBidder;  //addr of curr highest 
+        address highestBidder;  //addr of curr highest bid
         uint256 timePosted;  //block.timestamp of when item is listed
     }
 
@@ -40,7 +40,7 @@ contract UserManagement {
 
     uint256 private itemIndex = 1;  //global counter for item idx
 
-    uint256 public constant saleTime = 2 seconds;   //how long items can remain in store for
+    uint256 public constant saleTime = 2 weeks;   //how long items can remain in store for
 
 
     //maps an address to a User
@@ -334,8 +334,7 @@ contract UserManagement {
                 } else {
                     // Item has a highest bid
                     //check adequeate balance
-                    // Item has a highest bid
-                    
+
                     Item memory itemToCart = market[i];
                     if(users[itemToCart.highestBidder].balance >= itemToCart.currBid){
                         //sufficient balance
@@ -373,7 +372,6 @@ contract UserManagement {
                         users[itemToCart.owner].numSale--;
                         spotInStore[itemToCart.id] = 0;
                     }
-                    
                 }
             }
         }
@@ -495,8 +493,6 @@ contract UserManagement {
                 // check if bid amount is greater than current bid
                 if (bidAmount > item.currBid && msg.sender != item.owner && users[msg.sender].currBids < 15) {
                     if (users[msg.sender].balance >= bidAmount){
-
-                        //Update highest bidder and bid amount 
                         users[item.highestBidder].currBids--;
                         item.highestBidder = msg.sender;
                         item.currBid = bidAmount;
