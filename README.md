@@ -61,24 +61,12 @@ $ forge test
 
 
 ### editLowPrice(uint256 index, uint256 newLow)
-**Use:** Edits the lowest expected price of an item at the index being passed into the function in the items array to the newLow value that is being passed in by first making sure the index of the item is in the cart and the user is registered. 
-**In:** Takes in the index of the item to be edited and the new lowest expected price of the particular item. 
-**Out:** Returns true if the index of the item is in the cart and the user is registered and the new lowest expected price of item is successfully updated with the newLow value being passed in. 
 ### editHighPrice(uint256 index, uint256 newHigh)
-**Use:** Edits the highest expected price of an item at the index being passed into the function in the items array to the newHigh value that is being passed in by first making sure the index of the item is in the cart and the user is registered. 
-**In:** Takes in the index of the item to be edited and the new highest expected price of the particular item. 
-**Out:** Returns true if the index of the item is in the cart and the user is registered and the new highest expected price of item is successfully updated with the newHigh value being passed in. 
 ### editDescr(uint256 index, string newDesc)
-**Use:** Edits the description of an item at the index being passed into the function in the items array to the newDesc value that is being passed in by first making sure the index of the item is in the cart and the user is registered. 
-**In:** Takes in the index of the item to be edited and the new description of the particular item. 
-**Out:** Returns true if the index of the item is in the cart and the user is registered and the description of item is successfully updated with the newDesc value being passed in. 
 ### editName(uint256 index, string newName)
-**Use:** Edits the name of an item at the index being passed into the function in the items array to the newName value that is being passed in by first making sure the index of the item is in the cart and the user is registered. 
-**In:** Takes in the index of the item to be edited and the new name of the particular item. 
-**Out:** Returns true if the index of the item is in the cart and the user is registered and the description of item is successfully updated with the newName value being passed in.
 ### editType(uint256 index, string newType)
 **Use:** Edits an item in the items array of the caller <br />
-**In:** Takes in the index of the item to be edited and the new value<br />
+**In:** Takes in the index of the item to be edited and the new value <br />
 **Out:** Returns true if the item is successfully edited, returns false if the item is not found or if the caller is not registered <br />
 
 ### deleteItem(uint256 index)
