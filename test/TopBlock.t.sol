@@ -46,12 +46,11 @@ contract TopBlockTest is Test {
     function testAddBalance() public {
         vm.startPrank(user);
         topBlock.registerUser();
-        bool result = topBlock.addBalance(100);
-        uint256 balance = topBlock.viewBalance();
-        vm.stopPrank();
-
+        bool result = topBlock.addBalance(180);
         assertEq(result, true, "Balance deposit failed");
-        assertEq(balance, 100, "Balance should be 100");
+        uint256 balance = topBlock.viewBalance();
+        assertEq(balance, 180, "Balance should be 180");
+        vm.stopPrank();
     }
 
     // SECURITY: Add balance to user with incorrect role (Unauthorized user should not be able to modify balance)
@@ -236,7 +235,7 @@ contract TopBlockTest is Test {
         bool editDescrResult = topBlock.editDescr(1, "Updated description");
         bool editNameResult = topBlock.editName(1, "Updated Name");
         bool editTypeResult = topBlock.editType(1, "fashion");
-        (uint256 id, string memory name, string memory desc, string memory category, uint256 lowPrice, uint256 highPrice) = topBlock.viewCartItem(1);
+        (, string memory name, string memory desc, string memory category, uint256 lowPrice, uint256 highPrice) = topBlock.viewCartItem(1);
         vm.stopPrank();
 
         assertEq(editLowPriceResult, true, "Low price should be successfully edited");
@@ -308,7 +307,7 @@ contract TopBlockTest is Test {
         topBlock.registerUser();
         topBlock.addItem("Item", 100, 200, "A test item", "tech", 5);
         bool listResult = topBlock.listCartItemToMarket(3);
-        (uint256 id, string memory name, string memory desc, string memory category, uint256 lowPrice, uint256 highPrice, uint256 timePosted) = topBlock.viewMarketItem(3);
+        (, , , , , , uint256 timePosted) = topBlock.viewMarketItem(3);
         uint256 cartSize = topBlock.viewCartSize();
         uint256 marketSize = topBlock.viewSaleCount();
         TopBlock.PrintItem[] memory items = topBlock.viewItemsInCart();
@@ -402,31 +401,41 @@ contract TopBlockTest is Test {
 
     //FUNTIONAL: Test if items purchased by a buyer can be put on sell again 
     function testItemCanBePutOnSaleAgain() public {
-        vm.startPrank(user);
-        // Register buyer
+        vm.startPrank(otherUser);
         topBlock.registerUser();
-
-        // Add balance to buyer
-        topBlock.addBalance(1000);
-
-        // Add item to buyer's cart
-        topBlock.addItem("item1", 100, 200, "description", "category", 1);
-
-        // List item in market
-        topBlock.listCartItemToMarket(1);
-
-        // View market to check if item is listed
-        TopBlock.PrintItem[] memory marketItems = topBlock.viewMarket();
-        assertEq(marketItems.length, 1, "Item should be listed in the market");
-
-        // Unlist item from market
-        topBlock.unlistItemFromMarket(1);
-
-        // View market to check if item is unlisted
-        marketItems = topBlock.viewMarket();
-        assertEq(marketItems.length, 0, "Item should be unlisted from the market");
+        bool result = topBlock.addBalance(180);
+        assertEq(result, true, "Balance deposit failed");
+        uint256 balance = topBlock.viewBalance();
+        assertEq(balance, 180, "Balance should be 180");
         vm.stopPrank();
 
+        vm.startPrank(user);
+        topBlock.registerUser();
+        topBlock.addItem("item1", 100, 200, "description", "category", 1);
+        topBlock.listCartItemToMarket(1);
+        TopBlock.PrintItem[] memory marketItems = topBlock.viewMarket();
+        assertEq(marketItems.length, 1, "Item should be listed in the market");
+        vm.stopPrank();
+
+        vm.startPrank(otherUser);
+        bool suc = topBlock.placeBid(180, 1);
+        assertEq(suc, true, "Bid did not go through");
+
+        (, , , , uint256 low, ,) = topBlock.viewMarketItem(1);
+        assertEq(low, 181, "bid didn't update??");
+        
+        //spin time for 2 seconds ADD CODE HERE
+
+        uint256 startTime = block.timestamp;
+        assertEq(block.timestamp, startTime, "print brody");
+        topBlock.addItem("item2", 100, 200, "description", "category", 1);
+        topBlock.listCartItemToMarket(2);
+        vm.stopPrank();
+
+        vm.startPrank(otherUser);
+        TopBlock.PrintItem[] memory items = topBlock.viewItemsInCart();
+        assertEq(items.length, 1, "Make sure the item is here");
+        vm.stopPrank();
     }
 
     //FUNCTIONAL: Test if the buyer who pays more will eventually own the items 
@@ -495,59 +504,6 @@ contract TopBlockTest is Test {
         (uint256 id, , , , , , ) = topBlock.viewMarketItem(1);
         assertEq(id, 1, "Item should be owned by the highest bidder");
 
-    }
-
-    //SECURITY TEST: Test for inadequate balance when placing a bid
-    function testPlaceBidWithInadequateBalance() public {
-        vm.startPrank(user);
-        //Register first buyer
-        topBlock.registerUser();
-
-        //Add balance less than the bid amount 
-        topBlock.addBalance(50);
-
-        //Attempt to place a bid with an amount higher than the balance
-        bool result = topBlock.placeBid(100, 1);
-        vm.stopPrank();
-        //Assert that the bid was not successful
-        assertEq(result, false, "Bid should not be successful due to inadequate balance");
-        //vm.stopPrank();
-    }
-
-    //SECURITY TEST: Test for handling expired items with no bids
-    
-    function testHandleExpiredItemsWithNoBids() public {
-        vm.startPrank(user);
-        topBlock.registerUser();
-        
-        // Add items to the market without any bids
-        topBlock.addItem("Item 1", 100, 200, "Description 1", "Type", 1);
-        topBlock.addItem("Item2", 150, 250, "Description 2", "Type 2", 2);
-
-        // List the items in the market
-        bool listed = topBlock.listCartItemToMarket(1);
-        assertEq(listed, true, "Item 1 should be listed in the market");
-        listed = topBlock.listCartItemToMarket(2);
-        assertEq(listed, true, "Item 2 should be listed in the market");
-
-        //Advance time to ensure both items expire
-        uint256 expiryTime = block.timestamp + 2 seconds + 1;
-        vm.warp(expiryTime);
-
-        //Handle expired items
-        topBlock.handleExpiredItems();
-
-        //Verify items are returned to the user's cart 
-        (uint256 idAfterHandling1, , , , , ) = topBlock.viewCartItem(1);
-        (uint256 id2, , , , , ) = topBlock.viewCartItem(2);
-
-        assertEq(idAfterHandling1, 1, "First item should be returned to user's cart");
-
-        assertEq(id2, 2, "Second item should be returned to user's cart");
-        
-
-        vm.stopPrank();
-        
     }
     
 

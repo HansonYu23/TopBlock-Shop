@@ -92,10 +92,11 @@ contract TopBlock {
     }
 
 
-    //BALANCES
+    // BALANCES
     // adds balance to user
     function addBalance(uint256 amount) public returns (bool) {
         if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
+            require(users[msg.sender].balance + amount >= users[msg.sender].balance, "Overflow detected");
             users[msg.sender].balance += amount;
             return true;
         } else {
@@ -313,8 +314,8 @@ contract TopBlock {
     }
 
     function handleExpiredItems() external {
-        for (uint256 i = market.length - 1; i >= 1; i--) {
-            if (block.timestamp - market[i].timePosted >= saleTime) {
+        for (uint256 i = market.length - 1; i > 1; i--) {
+            if (block.timestamp == 1) {  // - market[i].timePosted >= saleTime
                 if (market[i].currBid == 0 || market[i].highestBidder == address(0)) {
                     // Item has no bids, return it to the owner's cart
 
@@ -331,7 +332,8 @@ contract TopBlock {
                     users[itemToCart.owner].numCart++;
                     users[itemToCart.owner].numSale--;
                     spotInStore[itemToCart.id] = 0;
-                } else {
+                } 
+                else {
                     // Item has a highest bid
                     //check adequeate balance
                     // Item has a highest bid
@@ -373,7 +375,6 @@ contract TopBlock {
                         users[itemToCart.owner].numSale--;
                         spotInStore[itemToCart.id] = 0;
                     }
-                    
                 }
             }
         }
@@ -486,22 +487,26 @@ contract TopBlock {
 
     // bid on an item
     function placeBid(uint256 bidAmount, uint256 index) public returns (bool) {
-        this.handleExpiredItems();
+        //this.handleExpiredItems();
         if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
             uint256 spot = spotInStore[index];
             if (spot > 0 && spot < market.length) {
                 Item storage item = market[spot];
 
                 // check if bid amount is greater than current bid
-                if (bidAmount > item.currBid && msg.sender != item.owner && users[msg.sender].currBids < 15) {
+                if (bidAmount >= item.lowPrice && msg.sender != item.owner && users[msg.sender].currBids < 15) {
                     if (users[msg.sender].balance >= bidAmount){
 
+
                         //Update highest bidder and bid amount 
-                        users[item.highestBidder].currBids--;
+                        if (item.highestBidder != address(0x0)){
+                            users[item.highestBidder].currBids--;
+                        }
                         item.highestBidder = msg.sender;
                         item.currBid = bidAmount;
-                        item.lowPrice = bidAmount;
-                        item.highPrice = item.highPrice > bidAmount * 6 / 5 ? item.highPrice : bidAmount * 6 / 5;
+                        item.lowPrice = bidAmount + 1;
+                        uint256 newHighPrice = (bidAmount + 1) * 6 / 5;
+                        item.highPrice = item.highPrice > newHighPrice ? item.highPrice : newHighPrice;
                         users[msg.sender].currBids++;
                         return true;
                     }
