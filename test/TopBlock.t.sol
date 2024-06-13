@@ -587,6 +587,32 @@ contract TopBlockTest is Test {
         vm.stopPrank();
     }
 
+    //FUNCTIONAL: Returns to seller if timed out with no bids
+    function testSuccessfulItemReturn() public {
+        vm.startPrank(user);
+        topBlock.registerUser(); //1
+        topBlock.addItem("item1", 100, 200, "description", "category", 1);
+        topBlock.listCartItemToMarket(1); //3
+        TopBlock.PrintItem[] memory marketItems = topBlock.viewMarket();
+        assertEq(marketItems.length, 1, "Item should be listed in the market");
+        vm.stopPrank();
+
+        vm.startPrank(otherUser);
+        topBlock.registerUser(); //4
+        topBlock.addItem("item1", 100, 200, "description", "category", 5);
+        topBlock.listCartItemToMarket(2); //6
+        topBlock.listCartItemToMarket(3); //8
+        topBlock.listCartItemToMarket(4); //10
+        topBlock.listCartItemToMarket(5); //12
+        topBlock.listCartItemToMarket(6); //14
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        uint256 cartSize = topBlock.viewCartSize();
+        assertEq(cartSize, 1, "where is the item");
+        vm.stopPrank();
+    }
+
 
 
 
