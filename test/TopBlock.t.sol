@@ -10,14 +10,12 @@ contract TopBlockTest is Test {
     address user;
     address otherUser;
     address extra1;
-    address extra2;
 
     function setUp() public {
         admin = address(this);
         user = address(0x1);
         otherUser = address(0x2);
         extra1 = address(0x3);
-        extra2 = address(0x3);
 
         topBlock = new TopBlock();
 
@@ -490,6 +488,22 @@ contract TopBlockTest is Test {
         vm.stopPrank();
     }
 
+    //SECURITY: Unregistered user cannot bid
+    function testBidByUnreg() public {
+        vm.startPrank(user);
+        topBlock.registerUser();
+        topBlock.addItem("item1", 100, 200, "description", "category", 1);
+        topBlock.listCartItemToMarket(1);
+        TopBlock.PrintItem[] memory marketItems = topBlock.viewMarket();
+        assertEq(marketItems.length, 1, "Item should be listed in the market");
+        vm.stopPrank();
+
+        vm.startPrank(otherUser);
+        bool suc = topBlock.placeBid(180, 1);
+        assertEq(suc, false, "Bid went through");
+        vm.stopPrank();
+    }
+
 
     //FUNCTIONAL: Test if the buyer who pays more will eventually own the items
     function testSuccessfulPurchase() public {
@@ -613,15 +627,39 @@ contract TopBlockTest is Test {
         vm.stopPrank();
     }
 
+    //SECURITY: Buyer doesn't have enough money at sale point
+    function testLostMoney() public {
+        vm.startPrank(user);
+        topBlock.registerUser(); //1
 
+        topBlock.addItem("item1", 100, 200, "description", "category", 1);
+        topBlock.listCartItemToMarket(1); //3   item1 = 1
+        TopBlock.PrintItem[] memory marketItems = topBlock.viewMarket();
+        assertEq(marketItems.length, 1, "Item should be listed in the market");
+        vm.stopPrank();
 
+        vm.startPrank(otherUser);
+        topBlock.registerUser(); //4
+        topBlock.addItem("item1", 100, 200, "description", "category", 1);
+        topBlock.listCartItemToMarket(2); //6  item2 = 4
+        marketItems = topBlock.viewMarket();
+        assertEq(marketItems.length, 2, "Item should be listed in the market");
+        vm.stopPrank();
 
+        vm.startPrank(extra1);
+        topBlock.registerUser(); //7
+        topBlock.addBalance(200);
+        topBlock.placeBid(200, 1); //9
+        topBlock.placeBid(200, 2); //11
+        topBlock.addItem("item1", 100, 200, "description", "category", 5);
+        topBlock.listCartItemToMarket(3); //15
+        topBlock.listCartItemToMarket(4); //17
+        topBlock.listCartItemToMarket(5);
+        vm.stopPrank();
 
-
-
-
-
-
-
-
+        vm.startPrank(otherUser);
+        uint256 cartSize = topBlock.viewCartSize();
+        assertEq(cartSize, 1, "where is the item");
+        vm.stopPrank();
+    }
 }
