@@ -9,6 +9,11 @@ $ forge test
 
 ## Function Information
 
+### viewTime()
+**Use:** Shows the market's time counter value <br />
+**In:** None <br />
+**Out:** Returns the actionCounter value <br />
+
 ### registerUser()
 **Use:** Register's the user <br />
 **In:** None <br />
@@ -55,25 +60,15 @@ $ forge test
 **Out:** Returns true if the items are successfully added, returns false if the items are unable to be added or if the caller is not registered <br />
 
 
-### editLowPrice(uint256 index, uint256 newLow)
-**Use:** Edits the lowest expected price of an item at the index being passed into the function in the items array to the newLow value that is being passed in by first making sure the index of the item is in the cart and the user is registered. 
-**In:** Takes in the index of the item to be edited and the new lowest expected price of the particular item. 
-**Out:** Returns true if the index of the item is in the cart and the user is registered and the new lowest expected price of item is successfully updated with the newLow value being passed in. 
-### editHighPrice(uint256 index, uint256 newHigh)
-**Use:** Edits the highest expected price of an item at the index being passed into the function in the items array to the newHigh value that is being passed in by first making sure the index of the item is in the cart and the user is registered. 
-**In:** Takes in the index of the item to be edited and the new highest expected price of the particular item. 
-**Out:** Returns true if the index of the item is in the cart and the user is registered and the new highest expected price of item is successfully updated with the newHigh value being passed in. 
-### editDescr(uint256 index, string newDesc)
-**Use:** Edits the description of an item at the index being passed into the function in the items array to the newDesc value that is being passed in by first making sure the index of the item is in the cart and the user is registered. 
-**In:** Takes in the index of the item to be edited and the new description of the particular item. 
-**Out:** Returns true if the index of the item is in the cart and the user is registered and the description of item is successfully updated with the newDesc value being passed in. 
-### editName(uint256 index, string newName)
-**Use:** Edits the name of an item at the index being passed into the function in the items array to the newName value that is being passed in by first making sure the index of the item is in the cart and the user is registered. 
-**In:** Takes in the index of the item to be edited and the new name of the particular item. 
-**Out:** Returns true if the index of the item is in the cart and the user is registered and the description of item is successfully updated with the newName value being passed in.
-### editType(uint256 index, string newType)
+### Edit Functions
+**editLowPrice(uint256 index, uint256 newLow)** <br />
+**editHighPrice(uint256 index, uint256 newHigh)** <br />
+**editDescr(uint256 index, string newDesc)** <br />
+**editName(uint256 index, string newName)** <br />
+**editType(uint256 index, string newType)** <br />
+<br />
 **Use:** Edits an item in the items array of the caller <br />
-**In:** Takes in the index of the item to be edited and the new value<br />
+**In:** Takes in the index of the item to be edited and the new value <br />
 **Out:** Returns true if the item is successfully edited, returns false if the item is not found or if the caller is not registered <br />
 
 ### deleteItem(uint256 index)
@@ -85,12 +80,6 @@ $ forge test
 **Use:** Shows the number of items that the caller has for active sale <br />
 **In:** None <br />
 **Out:** Returns the number of items that the caller has for active sale, returns 0 if the caller is not registered <br />
-
-### handleExpiredItems()
-**Use:** Checks market for any expired listings and completes the transaction, items are sent back to the lister if 
-there are no active bids or if the current highest bidder does not have sufficient balance to cover the transaction <br />
-**In:** None <br />
-**Out:** None <br />
 
 ### listCartItemToMarket(uint256 idx)
 **Use:** Adds item owned by the caller to the market and calls handleExpiredItems() <br />
@@ -122,8 +111,11 @@ there are no active bids or if the current highest bidder does not have sufficie
 **In:** Takes in the amount to be bid on the item and the index of the item in the market list <br />
 **Out:** Returns true if the bid is successfully placed on the item, returns false if the bid amount is not higher than the current highest bid on the item, if the user does not have enough balance to cover the bid, the item is not in the market, or if the caller is unregistered <br />
 
-
-
+### handleExpiredItems()  (not user visible)
+**Use:** Checks market for any expired listings and completes the transaction, items are sent back to the lister if 
+there are no active bids or if the current highest bidder does not have sufficient balance to cover the transaction <br />
+**In:** None <br />
+**Out:** None <br />
 
 
 
