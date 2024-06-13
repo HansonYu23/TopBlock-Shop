@@ -9,6 +9,11 @@ $ forge test
 
 ## Function Information
 
+### viewTime()
+**Use:** Shows the market's time counter value <br />
+**In:** None <br />
+**Out:** Returns the actionCounter value <br />
+
 ### registerUser()
 **Use:** Register's the user <br />
 **In:** None <br />
