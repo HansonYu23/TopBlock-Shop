@@ -2,10 +2,10 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "../src/UserManagement.sol";
+import "../src/TopBlock.sol";
 
-contract UserManagementTest is Test {
-    UserManagement userManagement;
+contract TopBlockTest is Test {
+    TopBlock topBlock;
     address admin;
     address user;
     address otherUser;
@@ -15,10 +15,10 @@ contract UserManagementTest is Test {
         user = address(0x1);
         otherUser = address(0x2);
 
-        userManagement = new UserManagement();
+        topBlock = new TopBlock();
 
         vm.startPrank(admin);
-        userManagement.registerUser();
+        topBlock.registerUser();
         vm.stopPrank();
     }
 
@@ -26,8 +26,8 @@ contract UserManagementTest is Test {
 
     function testRegisterUser() public {
         vm.startPrank(user);
-        bool registered = userManagement.registerUser();
-        uint8 role = userManagement.viewRole();
+        bool registered = topBlock.registerUser();
+        uint8 role = topBlock.viewRole();
         vm.stopPrank();
         assertEq(registered, true, "User should be registered");
         assertEq(role, 1, "User's role should be 1");
@@ -36,8 +36,8 @@ contract UserManagementTest is Test {
     //SECURITY: A registered user cannot re-register (Constant registration can allow masked addresses to take malicious actions)
     function sec_UserRegistersTwice() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        bool reg2 = userManagement.registerUser();
+        topBlock.registerUser();
+        bool reg2 = topBlock.registerUser();
         vm.stopPrank();
         assertEq(reg2, false, "User was allowed to register");
     }
@@ -45,9 +45,9 @@ contract UserManagementTest is Test {
     // FUNCTIONAL: Add balance to user with correct role
     function testAddBalance() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        bool result = userManagement.addBalance(100);
-        uint256 balance = userManagement.viewBalance();
+        topBlock.registerUser();
+        bool result = topBlock.addBalance(100);
+        uint256 balance = topBlock.viewBalance();
         vm.stopPrank();
 
         assertEq(result, true, "Balance deposit failed");
@@ -57,8 +57,8 @@ contract UserManagementTest is Test {
     // SECURITY: Add balance to user with incorrect role (Unauthorized user should not be able to modify balance)
     function testAddBalanceUnauthorized() public {
         vm.startPrank(otherUser);
-        bool result = userManagement.addBalance(100);
-        uint256 balance = userManagement.viewBalance();
+        bool result = topBlock.addBalance(100);
+        uint256 balance = topBlock.viewBalance();
         vm.stopPrank();
 
         assertEq(result, false, "Unauthorized user should not be able to add balance");
@@ -68,10 +68,10 @@ contract UserManagementTest is Test {
     // FUNCTIONAL: Withdraw balance from user with sufficient balance
     function testWithdrawBalance() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        userManagement.addBalance(100);
-        bool result = userManagement.withdrawBalance(50);
-        uint256 balance = userManagement.viewBalance();
+        topBlock.registerUser();
+        topBlock.addBalance(100);
+        bool result = topBlock.withdrawBalance(50);
+        uint256 balance = topBlock.viewBalance();
         vm.stopPrank();
 
         assertEq(result, true, "Balance should be withdrawn successfully");
@@ -82,10 +82,10 @@ contract UserManagementTest is Test {
     function testWithdrawInsufficientBalance() public {
         // Register the user
         vm.startPrank(user);
-        userManagement.registerUser();
-        userManagement.addBalance(50);
-        bool result = userManagement.withdrawBalance(100);
-        uint256 balance = userManagement.viewBalance();
+        topBlock.registerUser();
+        topBlock.addBalance(50);
+        bool result = topBlock.withdrawBalance(100);
+        uint256 balance = topBlock.viewBalance();
         vm.stopPrank();
 
         assertEq(result, false, "Withdrawal should fail due to insufficient balance");
@@ -95,8 +95,8 @@ contract UserManagementTest is Test {
     // SECURITY: Withdraw balance from unauthorized user
     function testWithdrawBalanceUnauthorized() public {
         vm.startPrank(otherUser);
-        bool result = userManagement.withdrawBalance(50);
-        uint256 balance = userManagement.viewBalance();
+        bool result = topBlock.withdrawBalance(50);
+        uint256 balance = topBlock.viewBalance();
         vm.stopPrank();
 
         assertEq(result, false, "Unauthorized user should not be able to withdraw balance");
@@ -108,10 +108,10 @@ contract UserManagementTest is Test {
     // FUNCTIONAL: Add item to user cart with correct role
     function testAddItem() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        bool result = userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
-        uint256 cartSize = userManagement.viewCartSize();
-        (uint256 id, string memory name, string memory desc, string memory category, uint256 lowPrice, uint256 highPrice) = userManagement.viewCartItem(1);
+        topBlock.registerUser();
+        bool result = topBlock.addItem("Item1", 100, 200, "A test item", "tech", 1);
+        uint256 cartSize = topBlock.viewCartSize();
+        (uint256 id, string memory name, string memory desc, string memory category, uint256 lowPrice, uint256 highPrice) = topBlock.viewCartItem(1);
         vm.stopPrank();
 
         assertEq(result, true, "Item should be added to the cart successfully");
@@ -127,8 +127,8 @@ contract UserManagementTest is Test {
     // SECURITY: Add item to user cart with incorrect role
     function testAddItemUnauthorized() public {
         vm.startPrank(otherUser);
-        bool result = userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
-        uint256 cartSize = userManagement.viewCartSize();
+        bool result = topBlock.addItem("Item1", 100, 200, "A test item", "tech", 1);
+        uint256 cartSize = topBlock.viewCartSize();
         vm.stopPrank();
 
         assertEq(result, false, "Unauthorized user should not be able to add item to the cart");
@@ -138,9 +138,9 @@ contract UserManagementTest is Test {
     // FUNCTIONAL/SECURITY: Add multiple items to user cart ensuring it doesn't exceed limit
     function testAddMultipleItems() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        bool result = userManagement.addItem("Item1", 100, 200, "A test item", "tech", 99);
-        uint256 cartSize = userManagement.viewCartSize();
+        topBlock.registerUser();
+        bool result = topBlock.addItem("Item1", 100, 200, "A test item", "tech", 99);
+        uint256 cartSize = topBlock.viewCartSize();
         vm.stopPrank();
 
         assertEq(result, true, "Items should be added to the cart successfully");
@@ -148,8 +148,8 @@ contract UserManagementTest is Test {
 
         // SECURITY: Test exceeding the cart limit
         vm.startPrank(user);
-        result = userManagement.addItem("Item2", 100, 200, "Another test item", "tech", 2);
-        cartSize = userManagement.viewCartSize();
+        result = topBlock.addItem("Item2", 100, 200, "Another test item", "tech", 2);
+        cartSize = topBlock.viewCartSize();
         vm.stopPrank();
 
         assertEq(result, false, "Adding items should fail due to cart size limit");
@@ -159,26 +159,26 @@ contract UserManagementTest is Test {
     // FUNCTIONAL: Users can view all items in cart, SECURITY: Items appear only to owner
     function testViewCarts() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        bool result1 = userManagement.addItem("Item1", 100, 200, "A test item 1", "tech", 1);
-        bool result2 = userManagement.addItem("Item2", 150, 250, "A test item 2", "fashion", 1);
+        topBlock.registerUser();
+        bool result1 = topBlock.addItem("Item1", 100, 200, "A test item 1", "tech", 1);
+        bool result2 = topBlock.addItem("Item2", 150, 250, "A test item 2", "fashion", 1);
 
         vm.stopPrank();
 
         vm.startPrank(otherUser);
-        userManagement.registerUser();
-        bool result3 = userManagement.addItem("Item3", 100, 200, "A test item 1", "tech", 1);
-        bool result4 = userManagement.addItem("Item4", 150, 250, "A test item 2", "fashion", 1);
+        topBlock.registerUser();
+        bool result3 = topBlock.addItem("Item3", 100, 200, "A test item 1", "tech", 1);
+        bool result4 = topBlock.addItem("Item4", 150, 250, "A test item 2", "fashion", 1);
         vm.stopPrank();
 
         vm.startPrank(user);
-        uint256 cartSize1 = userManagement.viewCartSize();
-        UserManagement.PrintItem[] memory items1 = userManagement.viewItemsInCart();
+        uint256 cartSize1 = topBlock.viewCartSize();
+        TopBlock.PrintItem[] memory items1 = topBlock.viewItemsInCart();
         vm.stopPrank();
 
         vm.startPrank(otherUser);
-        uint256 cartSize2 = userManagement.viewCartSize();
-        UserManagement.PrintItem[] memory items2 = userManagement.viewItemsInCart();
+        uint256 cartSize2 = topBlock.viewCartSize();
+        TopBlock.PrintItem[] memory items2 = topBlock.viewItemsInCart();
         vm.stopPrank();
 
         assertEq(result1, true, "First item should be added to the cart successfully");
@@ -226,17 +226,17 @@ contract UserManagementTest is Test {
     // FUNCTIONAL: Edit item properties successfully
     function testEditItem() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        bool result = userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
+        topBlock.registerUser();
+        bool result = topBlock.addItem("Item1", 100, 200, "A test item", "tech", 1);
         assertEq(result, true, "Item should be added to the cart successfully");
         
         // Edit item properties
-        bool editLowPriceResult = userManagement.editLowPrice(1, 150);
-        bool editHighPriceResult = userManagement.editHighPrice(1, 250);
-        bool editDescrResult = userManagement.editDescr(1, "Updated description");
-        bool editNameResult = userManagement.editName(1, "Updated Name");
-        bool editTypeResult = userManagement.editType(1, "fashion");
-        (uint256 id, string memory name, string memory desc, string memory category, uint256 lowPrice, uint256 highPrice) = userManagement.viewCartItem(1);
+        bool editLowPriceResult = topBlock.editLowPrice(1, 150);
+        bool editHighPriceResult = topBlock.editHighPrice(1, 250);
+        bool editDescrResult = topBlock.editDescr(1, "Updated description");
+        bool editNameResult = topBlock.editName(1, "Updated Name");
+        bool editTypeResult = topBlock.editType(1, "fashion");
+        (uint256 id, string memory name, string memory desc, string memory category, uint256 lowPrice, uint256 highPrice) = topBlock.viewCartItem(1);
         vm.stopPrank();
 
         assertEq(editLowPriceResult, true, "Low price should be successfully edited");
@@ -255,15 +255,15 @@ contract UserManagementTest is Test {
     // FUNCTIONAL: Edit item properties with incorrect index (Expect failure)
     function testEditItemIncorrectIndex() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        bool result = userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
+        topBlock.registerUser();
+        bool result = topBlock.addItem("Item1", 100, 200, "A test item", "tech", 1);
         assertEq(result, true, "Item should be added to the cart successfully");
 
-        bool editLowPriceResult = userManagement.editLowPrice(2, 150);
-        bool editHighPriceResult = userManagement.editHighPrice(2, 250);
-        bool editDescrResult = userManagement.editDescr(2, "Updated description");
-        bool editNameResult = userManagement.editName(2, "Updated Name");
-        bool editTypeResult = userManagement.editType(2, "fashion");
+        bool editLowPriceResult = topBlock.editLowPrice(2, 150);
+        bool editHighPriceResult = topBlock.editHighPrice(2, 250);
+        bool editDescrResult = topBlock.editDescr(2, "Updated description");
+        bool editNameResult = topBlock.editName(2, "Updated Name");
+        bool editTypeResult = topBlock.editType(2, "fashion");
 
         vm.stopPrank();
 
@@ -277,11 +277,11 @@ contract UserManagementTest is Test {
     // FUNCTIONAL: Delete item from cart successfully
     function testDeleteItem() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        bool result = userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
+        topBlock.registerUser();
+        bool result = topBlock.addItem("Item1", 100, 200, "A test item", "tech", 1);
         assertEq(result, true, "Item should be added to the cart successfully");
-        bool deleteResult = userManagement.deleteItem(1);
-        uint256 s = userManagement.viewCartSize();
+        bool deleteResult = topBlock.deleteItem(1);
+        uint256 s = topBlock.viewCartSize();
         vm.stopPrank();
 
         assertEq(deleteResult, true, "Item should be deleted successfully");
@@ -291,11 +291,11 @@ contract UserManagementTest is Test {
     // FUNCTIONAL: Attempt to delete item with incorrect index (Expect failure)
     function testDeleteItemIncorrectIndex() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        bool result = userManagement.addItem("Item1", 100, 200, "A test item", "tech", 1);
+        topBlock.registerUser();
+        bool result = topBlock.addItem("Item1", 100, 200, "A test item", "tech", 1);
         assertEq(result, true, "Item should be added to the cart successfully");
-        bool deleteResult = userManagement.deleteItem(2);
-        uint256 s = userManagement.viewCartSize();
+        bool deleteResult = topBlock.deleteItem(2);
+        uint256 s = topBlock.viewCartSize();
         vm.stopPrank();
 
         assertEq(deleteResult, false, "Item deletion with incorrect index should fail");
@@ -305,13 +305,13 @@ contract UserManagementTest is Test {
     // FUNCTIONAL: List item to market successfully
     function testListToMarket() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        userManagement.addItem("Item", 100, 200, "A test item", "tech", 5);
-        bool listResult = userManagement.listCartItemToMarket(3);
-        (uint256 id, string memory name, string memory desc, string memory category, uint256 lowPrice, uint256 highPrice, uint256 timePosted) = userManagement.viewMarketItem(3);
-        uint256 cartSize = userManagement.viewCartSize();
-        uint256 marketSize = userManagement.viewSaleCount();
-        UserManagement.PrintItem[] memory items = userManagement.viewItemsInCart();
+        topBlock.registerUser();
+        topBlock.addItem("Item", 100, 200, "A test item", "tech", 5);
+        bool listResult = topBlock.listCartItemToMarket(3);
+        (uint256 id, string memory name, string memory desc, string memory category, uint256 lowPrice, uint256 highPrice, uint256 timePosted) = topBlock.viewMarketItem(3);
+        uint256 cartSize = topBlock.viewCartSize();
+        uint256 marketSize = topBlock.viewSaleCount();
+        TopBlock.PrintItem[] memory items = topBlock.viewItemsInCart();
         vm.stopPrank();
 
         assertEq(listResult, true, "Item should be listed to the market successfully");
@@ -324,10 +324,10 @@ contract UserManagementTest is Test {
     // FUNCTIONAL: Attempt to list item with incorrect index (Expect failure)
     function testListIncorrectIndex() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        userManagement.addItem("Item", 100, 200, "Test item", "tech", 1);
-        bool listResult = userManagement.listCartItemToMarket(2);
-        uint256 cartSize = userManagement.viewCartSize();
+        topBlock.registerUser();
+        topBlock.addItem("Item", 100, 200, "Test item", "tech", 1);
+        bool listResult = topBlock.listCartItemToMarket(2);
+        uint256 cartSize = topBlock.viewCartSize();
         vm.stopPrank();
 
         assertEq(listResult, false, "Listing item to market with incorrect index should fail");
@@ -337,20 +337,20 @@ contract UserManagementTest is Test {
     //FUNCTIONAL: view all items in market
     function testViewMarket() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        userManagement.addItem("Item1", 100, 200, "Test item 1", "tech", 1);
-        userManagement.addItem("Item2", 150, 250, "Test item 2", "fashion", 1);
-        userManagement.listCartItemToMarket(1);
-        userManagement.listCartItemToMarket(2);
+        topBlock.registerUser();
+        topBlock.addItem("Item1", 100, 200, "Test item 1", "tech", 1);
+        topBlock.addItem("Item2", 150, 250, "Test item 2", "fashion", 1);
+        topBlock.listCartItemToMarket(1);
+        topBlock.listCartItemToMarket(2);
         vm.stopPrank();
 
         vm.startPrank(otherUser);
-        userManagement.registerUser();
-        userManagement.addItem("Item3", 200, 300, "Test item 3", "food", 1);
-        userManagement.addItem("Item4", 250, 350, "Test item 4", "books", 1);
-        userManagement.listCartItemToMarket(3);
-        userManagement.listCartItemToMarket(4);
-        UserManagement.PrintItem[] memory items = userManagement.viewMarket();
+        topBlock.registerUser();
+        topBlock.addItem("Item3", 200, 300, "Test item 3", "food", 1);
+        topBlock.addItem("Item4", 250, 350, "Test item 4", "books", 1);
+        topBlock.listCartItemToMarket(3);
+        topBlock.listCartItemToMarket(4);
+        TopBlock.PrintItem[] memory items = topBlock.viewMarket();
         vm.stopPrank();
 
         assertEq(items.length, 4, "Market should contain all items from both users");
@@ -360,12 +360,12 @@ contract UserManagementTest is Test {
     // FUNCTIONAL: unlistItemFromMarket - successful removal from market
     function testUnlistItemFromMarketSuccess() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        userManagement.addItem("Item1", 100, 200, "Test item 1", "tech", 1);
-        userManagement.listCartItemToMarket(1);
-        bool unlisted = userManagement.unlistItemFromMarket(1);
-        uint256 saleCount = userManagement.viewSaleCount();
-        uint256 cartSize = userManagement.viewCartSize();
+        topBlock.registerUser();
+        topBlock.addItem("Item1", 100, 200, "Test item 1", "tech", 1);
+        topBlock.listCartItemToMarket(1);
+        bool unlisted = topBlock.unlistItemFromMarket(1);
+        uint256 saleCount = topBlock.viewSaleCount();
+        uint256 cartSize = topBlock.viewCartSize();
         vm.stopPrank();
 
         assertEq(unlisted, true, "Item should be unlisted from the market");
@@ -376,14 +376,14 @@ contract UserManagementTest is Test {
     // SECURITY: unlistItemFromMarket - unauthorized user
     function testUnlistItemFromMarketUnauthorized() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        userManagement.addItem("Item1", 100, 200, "Test item 1", "tech", 1);
-        userManagement.listCartItemToMarket(1);
+        topBlock.registerUser();
+        topBlock.addItem("Item1", 100, 200, "Test item 1", "tech", 1);
+        topBlock.listCartItemToMarket(1);
         vm.stopPrank();
 
         vm.startPrank(otherUser);
-        userManagement.registerUser();
-        bool unlisted = userManagement.unlistItemFromMarket(1);
+        topBlock.registerUser();
+        bool unlisted = topBlock.unlistItemFromMarket(1);
         vm.stopPrank();
         assertEq(unlisted, false, "Unregistered user should not be able to unlist item from market");
     }
@@ -391,10 +391,10 @@ contract UserManagementTest is Test {
     // FUNCTIONAL: unlistItemFromMarket with index out of range
     function testUnlistItemFromMarketOutOfRange() public {
         vm.startPrank(user);
-        userManagement.registerUser();
-        userManagement.addItem("Item1", 100, 200, "Test item 1", "tech", 1);
-        userManagement.listCartItemToMarket(1);
-        bool success = userManagement.unlistItemFromMarket(99);
+        topBlock.registerUser();
+        topBlock.addItem("Item1", 100, 200, "Test item 1", "tech", 1);
+        topBlock.listCartItemToMarket(1);
+        bool success = topBlock.unlistItemFromMarket(99);
         vm.stopPrank();
 
         assertEq(success, false, "Unlisting item with index out of range should fail");
@@ -404,26 +404,26 @@ contract UserManagementTest is Test {
     function testItemCanBePutOnSaleAgain() public {
         vm.startPrank(user);
         // Register buyer
-        userManagement.registerUser();
+        topBlock.registerUser();
 
         // Add balance to buyer
-        userManagement.addBalance(1000);
+        topBlock.addBalance(1000);
 
         // Add item to buyer's cart
-        userManagement.addItem("item1", 100, 200, "description", "category", 1);
+        topBlock.addItem("item1", 100, 200, "description", "category", 1);
 
         // List item in market
-        userManagement.listCartItemToMarket(1);
+        topBlock.listCartItemToMarket(1);
 
         // View market to check if item is listed
-        UserManagement.PrintItem[] memory marketItems = userManagement.viewMarket();
+        TopBlock.PrintItem[] memory marketItems = topBlock.viewMarket();
         assertEq(marketItems.length, 1, "Item should be listed in the market");
 
         // Unlist item from market
-        userManagement.unlistItemFromMarket(1);
+        topBlock.unlistItemFromMarket(1);
 
         // View market to check if item is unlisted
-        marketItems = userManagement.viewMarket();
+        marketItems = topBlock.viewMarket();
         assertEq(marketItems.length, 0, "Item should be unlisted from the market");
         vm.stopPrank();
 
@@ -433,29 +433,29 @@ contract UserManagementTest is Test {
     function testHigherOwnsItem() public {
         vm.startPrank(user);
         //Register first buyer
-        userManagement.registerUser();
+        topBlock.registerUser();
         //Add balance to first buyer
-        userManagement.addBalance(1000);
+        topBlock.addBalance(1000);
         vm.stopPrank();
 
         //Handle expired items
-        //userManagement.handleExpiredItems();
+        //topBlock.handleExpiredItems();
         //vm.stopPrank();
 
         //Register and add balance for the second user 
         vm.startPrank(otherUser);
-        userManagement.registerUser();
-        userManagement.addBalance(1000);
+        topBlock.registerUser();
+        topBlock.addBalance(1000);
         vm.stopPrank();
 
         //Handle expired items
-        //userManagement.handleExpiredItems();
+        //topBlock.handleExpiredItems();
 
         //First user places a bid
         vm.startPrank(user);
-        userManagement.addItem("item2", 100, 200, "description", "category", 1);
-        //bool bidResult1 = userManagement.placeBid(150, 1);
-        bool listed = userManagement.listCartItemToMarket(1);
+        topBlock.addItem("item2", 100, 200, "description", "category", 1);
+        //bool bidResult1 = topBlock.placeBid(150, 1);
+        bool listed = topBlock.listCartItemToMarket(1);
         assertEq(listed, true, "Item should be listed in the market");
         //assertEq(bidResult1, true, "First user's bid should be successful");
         vm.stopPrank();
@@ -463,36 +463,36 @@ contract UserManagementTest is Test {
 
         // First user places a bid
         vm.startPrank(user);
-        bool bidResult1 = userManagement.placeBid(150, 1);
+        bool bidResult1 = topBlock.placeBid(150, 1);
         vm.stopPrank();
         assertEq(bidResult1, true, "First user's bid should be successful");
 
         //Handle expired items
-        //userManagement.handleExpiredItems();
+        //topBlock.handleExpiredItems();
         //vm.stopPrank();
 
         //Second user places a higher bid
         vm.startPrank(otherUser);
-        bool bidResult2 = userManagement.placeBid(200, 1);
+        bool bidResult2 = topBlock.placeBid(200, 1);
         vm.stopPrank();
         assertEq(bidResult2, true, "Second user's bid should be successful");
         //vm.stopPrank();
 
         //Handle expired items
-        userManagement.handleExpiredItems();
+        topBlock.handleExpiredItems();
         //vm.stopPrank();
 
         //Assertions for the first user
         vm.startPrank(user);
-        assertEq(userManagement.viewNumActiveBids(), 0, "First buyer should have 0 active bids after being outbid.");
+        assertEq(topBlock.viewNumActiveBids(), 0, "First buyer should have 0 active bids after being outbid.");
         vm.stopPrank();
 
         //Assertions for the second user
         vm.startPrank(otherUser);
-        assertEq(userManagement.viewNumActiveBids(), 1, "Second buyer should have 1 active bid after bidding.");
+        assertEq(topBlock.viewNumActiveBids(), 1, "Second buyer should have 1 active bid after bidding.");
         vm.stopPrank();
 
-        (uint256 id, , , , , , ) = userManagement.viewMarketItem(1);
+        (uint256 id, , , , , , ) = topBlock.viewMarketItem(1);
         assertEq(id, 1, "Item should be owned by the highest bidder");
 
     }
@@ -501,13 +501,13 @@ contract UserManagementTest is Test {
     function testPlaceBidWithInadequateBalance() public {
         vm.startPrank(user);
         //Register first buyer
-        userManagement.registerUser();
+        topBlock.registerUser();
 
         //Add balance less than the bid amount 
-        userManagement.addBalance(50);
+        topBlock.addBalance(50);
 
         //Attempt to place a bid with an amount higher than the balance
-        bool result = userManagement.placeBid(100, 1);
+        bool result = topBlock.placeBid(100, 1);
         vm.stopPrank();
         //Assert that the bid was not successful
         assertEq(result, false, "Bid should not be successful due to inadequate balance");
@@ -518,16 +518,16 @@ contract UserManagementTest is Test {
     
     function testHandleExpiredItemsWithNoBids() public {
         vm.startPrank(user);
-        userManagement.registerUser();
+        topBlock.registerUser();
         
         // Add items to the market without any bids
-        userManagement.addItem("Item 1", 100, 200, "Description 1", "Type", 1);
-        userManagement.addItem("Item2", 150, 250, "Description 2", "Type 2", 2);
+        topBlock.addItem("Item 1", 100, 200, "Description 1", "Type", 1);
+        topBlock.addItem("Item2", 150, 250, "Description 2", "Type 2", 2);
 
         // List the items in the market
-        bool listed = userManagement.listCartItemToMarket(1);
+        bool listed = topBlock.listCartItemToMarket(1);
         assertEq(listed, true, "Item 1 should be listed in the market");
-        listed = userManagement.listCartItemToMarket(2);
+        listed = topBlock.listCartItemToMarket(2);
         assertEq(listed, true, "Item 2 should be listed in the market");
 
         //Advance time to ensure both items expire
@@ -535,11 +535,11 @@ contract UserManagementTest is Test {
         vm.warp(expiryTime);
 
         //Handle expired items
-        userManagement.handleExpiredItems();
+        topBlock.handleExpiredItems();
 
         //Verify items are returned to the user's cart 
-        (uint256 idAfterHandling1, , , , , ) = userManagement.viewCartItem(1);
-        (uint256 id2, , , , , ) = userManagement.viewCartItem(2);
+        (uint256 idAfterHandling1, , , , , ) = topBlock.viewCartItem(1);
+        (uint256 id2, , , , , ) = topBlock.viewCartItem(2);
 
         assertEq(idAfterHandling1, 1, "First item should be returned to user's cart");
 
