@@ -81,12 +81,6 @@ $ forge test
 **In:** None <br />
 **Out:** Returns the number of items that the caller has for active sale, returns 0 if the caller is not registered <br />
 
-### handleExpiredItems()  (not user visible)
-**Use:** Checks market for any expired listings and completes the transaction, items are sent back to the lister if 
-there are no active bids or if the current highest bidder does not have sufficient balance to cover the transaction <br />
-**In:** None <br />
-**Out:** None <br />
-
 ### listCartItemToMarket(uint256 idx)
 **Use:** Adds item owned by the caller to the market and calls handleExpiredItems() <br />
 **In:** Takes in the user item array index of the item to be listed <br />
@@ -117,8 +111,11 @@ there are no active bids or if the current highest bidder does not have sufficie
 **In:** Takes in the amount to be bid on the item and the index of the item in the market list <br />
 **Out:** Returns true if the bid is successfully placed on the item, returns false if the bid amount is not higher than the current highest bid on the item, if the user does not have enough balance to cover the bid, the item is not in the market, or if the caller is unregistered <br />
 
-
-
+### handleExpiredItems()  (not user visible)
+**Use:** Checks market for any expired listings and completes the transaction, items are sent back to the lister if 
+there are no active bids or if the current highest bidder does not have sufficient balance to cover the transaction <br />
+**In:** None <br />
+**Out:** None <br />
 
 
 
