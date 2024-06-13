@@ -42,7 +42,7 @@ contract TopBlock {
 
     uint256 private actionCounter = 0; 
 
-    uint256 public constant saleTime = 10;   //how long items can remain in store for
+    uint256 public constant saleTime = 10;   //how long items can remain in store for  (10 for testing purposes)
 
 
     //maps an address to a User

@@ -535,6 +535,58 @@ contract TopBlockTest is Test {
         vm.stopPrank();
     }
 
+    //FUNCTIONAL: Buyer can place item for resale
+    function testSuccessfulResale() public {
+        vm.startPrank(user);
+        topBlock.registerUser(); //1
+
+        topBlock.addItem("item1", 100, 200, "description", "category", 5);
+        topBlock.listCartItemToMarket(1); //3
+        TopBlock.PrintItem[] memory marketItems = topBlock.viewMarket();
+        assertEq(marketItems.length, 1, "Item should be listed in the market");
+        vm.stopPrank();
+
+        vm.startPrank(otherUser);
+        topBlock.registerUser(); //4
+        topBlock.addBalance(180);
+        topBlock.placeBid(180, 1); //6
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        topBlock.listCartItemToMarket(2); //8
+        topBlock.listCartItemToMarket(3); //10
+        topBlock.listCartItemToMarket(4); //12
+        topBlock.listCartItemToMarket(5); //14
+        vm.stopPrank();
+
+        vm.startPrank(otherUser);
+        uint256 count = topBlock.viewTime();
+        assertEq(count, 14, "count error");
+        uint256 cartSize = topBlock.viewCartSize();
+        assertEq(cartSize, 1, "where is the item");
+        topBlock.listCartItemToMarket(1);  //relist item
+        topBlock.addItem("item2", 100, 200, "description", "category", 5);
+        vm.stopPrank();
+
+        vm.startPrank(extra1);
+        topBlock.registerUser();
+        topBlock.addBalance(200);
+        topBlock.placeBid(200, 1);
+        vm.stopPrank();
+
+        vm.startPrank(otherUser);
+        topBlock.listCartItemToMarket(6);
+        topBlock.listCartItemToMarket(7);
+        topBlock.listCartItemToMarket(8);
+        topBlock.listCartItemToMarket(9);
+        vm.stopPrank();
+
+        vm.startPrank(extra1);
+        cartSize = topBlock.viewCartSize();
+        assertEq(cartSize, 1, "where is the item");
+        vm.stopPrank();
+    }
+
 
 
 
