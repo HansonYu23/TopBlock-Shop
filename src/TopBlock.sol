@@ -320,7 +320,7 @@ contract TopBlock {
     }
 
     function handleExpiredItems() external {
-        for (uint256 i = market.length - 1; i > 1; i--) {
+        for (uint256 i = market.length - 1; i >= 1; i--) {
             if (actionCounter - market[i].timePosted > saleTime || actionCounter < market[i].timePosted) {  // 
                 if (market[i].currBid == 0 || market[i].highestBidder == address(0)) {
                     // Item has no bids, return it to the owner's cart

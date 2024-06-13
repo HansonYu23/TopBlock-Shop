@@ -492,7 +492,48 @@ contract TopBlockTest is Test {
 
 
     //FUNCTIONAL: Test if the buyer who pays more will eventually own the items
-    
+    function testSuccessfulPurchase() public {
+        vm.startPrank(user);
+        topBlock.registerUser(); //1
+
+        topBlock.addItem("item1", 100, 200, "description", "category", 5);
+        topBlock.listCartItemToMarket(1); //3
+        TopBlock.PrintItem[] memory marketItems = topBlock.viewMarket();
+        assertEq(marketItems.length, 1, "Item should be listed in the market");
+        vm.stopPrank();
+
+        vm.startPrank(otherUser);
+        topBlock.registerUser(); //4
+        topBlock.addBalance(180);
+        bool suc = topBlock.placeBid(180, 1); //6
+        assertEq(suc, true, "Bid did not go through");
+        (, , , , uint256 low, ,uint256 time) = topBlock.viewMarketItem(1);
+        assertEq(time, 1, "time wrong");
+        assertEq(low, 181, "bid didn't update??");
+        vm.stopPrank();
+
+        vm.startPrank(extra1);
+        topBlock.registerUser(); //7
+        topBlock.addBalance(250);
+        suc = topBlock.placeBid(250, 1); //9
+        assertEq(suc, true, "Bid did not go through");
+        (, , , , low, ,) = topBlock.viewMarketItem(1);
+        assertEq(low, 251, "bid didn't update??");
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        topBlock.listCartItemToMarket(2); //11
+        topBlock.listCartItemToMarket(3); //13
+        topBlock.listCartItemToMarket(4); //15
+        vm.stopPrank();
+
+        vm.startPrank(extra1);
+        uint256 count = topBlock.viewTime();
+        assertEq(count, 15, "count error");
+        uint256 cartSize = topBlock.viewCartSize();
+        assertEq(cartSize, 1, "where is the item");
+        vm.stopPrank();
+    }
 
 
 
