@@ -491,7 +491,7 @@ contract TopBlockTest is Test {
     }
 
 
-    //FUNCTIONAL: Test if the buyer who pays more will eventually own the items 
+    //FUNCTIONAL: Test if the buyer who pays more will eventually own the items
     
 
 

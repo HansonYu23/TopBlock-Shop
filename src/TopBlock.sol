@@ -40,7 +40,9 @@ contract TopBlock {
 
     uint256 private itemIndex = 1;  //global counter for item idx
 
-    uint256 public constant saleTime = 2 seconds;   //how long items can remain in store for
+    uint256 private actionCounter = 0; 
+
+    uint256 public constant saleTime = 10;   //how long items can remain in store for
 
 
     //maps an address to a User
@@ -77,6 +79,7 @@ contract TopBlock {
     function registerUser() public returns (bool) {
         if (users[msg.sender].role == 0) {
             users[msg.sender].role = 1;
+            actionCounter++;
             return true;
         }
         return false;
@@ -315,7 +318,7 @@ contract TopBlock {
 
     function handleExpiredItems() external {
         for (uint256 i = market.length - 1; i > 1; i--) {
-            if (block.timestamp - market[i].timePosted >= saleTime) {  // 
+            if (actionCounter - market[i].timePosted > saleTime || actionCounter < market[i].timePosted) {  // 
                 if (market[i].currBid == 0 || market[i].highestBidder == address(0)) {
                     // Item has no bids, return it to the owner's cart
 
@@ -395,10 +398,11 @@ contract TopBlock {
                         users[msg.sender].items.pop();
                         users[msg.sender].numCart--;
 
-                        itemToMarket.timePosted = block.timestamp;  //set time
+                        itemToMarket.timePosted = actionCounter;  //set time
                         market.push(itemToMarket);
                         spotInStore[itemToMarket.id] = market.length - 1;
                         users[msg.sender].numSale++;
+                        actionCounter += 2;
                         return true;
                     }
                 }
@@ -432,7 +436,7 @@ contract TopBlock {
                 users[msg.sender].numCart++;
                 users[msg.sender].numSale--;
                 spotInStore[index] = 0;
-
+                actionCounter++;
                 return true;
             }
             else{
@@ -487,7 +491,7 @@ contract TopBlock {
 
     // bid on an item
     function placeBid(uint256 bidAmount, uint256 index) public returns (bool) {
-        //this.handleExpiredItems();
+        this.handleExpiredItems();
         if (users[msg.sender].role == 1 || users[msg.sender].role == 2) {
             uint256 spot = spotInStore[index];
             if (spot > 0 && spot < market.length) {
@@ -508,6 +512,7 @@ contract TopBlock {
                         uint256 newHighPrice = (bidAmount + 1) * 6 / 5;
                         item.highPrice = item.highPrice > newHighPrice ? item.highPrice : newHighPrice;
                         users[msg.sender].currBids++;
+                        actionCounter += 2;
                         return true;
                     }
                     else{
