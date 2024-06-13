@@ -81,7 +81,7 @@ $ forge test
 **In:** None <br />
 **Out:** Returns the number of items that the caller has for active sale, returns 0 if the caller is not registered <br />
 
-### handleExpiredItems()
+### handleExpiredItems()  (not user visible)
 **Use:** Checks market for any expired listings and completes the transaction, items are sent back to the lister if 
 there are no active bids or if the current highest bidder does not have sufficient balance to cover the transaction <br />
 **In:** None <br />
