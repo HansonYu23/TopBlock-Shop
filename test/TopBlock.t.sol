@@ -424,10 +424,6 @@ contract TopBlockTest is Test {
         (, , , , uint256 low, ,) = topBlock.viewMarketItem(1);
         assertEq(low, 181, "bid didn't update??");
         
-        //spin time for 2 seconds ADD CODE HERE
-
-        uint256 startTime = block.timestamp;
-        assertEq(block.timestamp, startTime, "print brody");
         topBlock.addItem("item2", 100, 200, "description", "category", 1);
         topBlock.listCartItemToMarket(2);
         vm.stopPrank();
