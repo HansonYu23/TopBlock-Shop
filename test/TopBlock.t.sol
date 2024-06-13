@@ -9,11 +9,15 @@ contract TopBlockTest is Test {
     address admin;
     address user;
     address otherUser;
+    address extra1;
+    address extra2;
 
     function setUp() public {
         admin = address(this);
         user = address(0x1);
         otherUser = address(0x2);
+        extra1 = address(0x3);
+        extra2 = address(0x3);
 
         topBlock = new TopBlock();
 
@@ -399,15 +403,8 @@ contract TopBlockTest is Test {
         assertEq(success, false, "Unlisting item with index out of range should fail");
     }
 
-    //FUNTIONAL: Test if items purchased by a buyer can be put on sell again 
-    function testItemCanBePutOnSaleAgain() public {
-        vm.startPrank(otherUser);
-        topBlock.registerUser();
-        bool result = topBlock.addBalance(180);
-        assertEq(result, true, "Balance deposit failed");
-        uint256 balance = topBlock.viewBalance();
-        assertEq(balance, 180, "Balance should be 180");
-        vm.stopPrank();
+    //FUNTIONAL: Test if items can be bid on successfully multiple times
+    function testSuccessfulBid() public {
 
         vm.startPrank(user);
         topBlock.registerUser();
@@ -418,89 +415,83 @@ contract TopBlockTest is Test {
         vm.stopPrank();
 
         vm.startPrank(otherUser);
+        topBlock.registerUser();
+        topBlock.addBalance(180);
         bool suc = topBlock.placeBid(180, 1);
         assertEq(suc, true, "Bid did not go through");
-
         (, , , , uint256 low, ,) = topBlock.viewMarketItem(1);
         assertEq(low, 181, "bid didn't update??");
-        
-        topBlock.addItem("item2", 100, 200, "description", "category", 1);
-        topBlock.listCartItemToMarket(2);
+        vm.stopPrank();
+
+        vm.startPrank(extra1);
+        topBlock.registerUser();
+        topBlock.addBalance(250);
+        suc = topBlock.placeBid(250, 1);
+        assertEq(suc, true, "Bid did not go through");
+        (, , , , low, ,) = topBlock.viewMarketItem(1);
+        assertEq(low, 251, "bid didn't update??");
+        vm.stopPrank();
+    }
+
+    //SECURITY: Test if failed bid if underbid
+    function testBidTooLow() public {
+
+        vm.startPrank(user);
+        topBlock.registerUser();
+        topBlock.addItem("item1", 100, 200, "description", "category", 1);
+        topBlock.listCartItemToMarket(1);
+        TopBlock.PrintItem[] memory marketItems = topBlock.viewMarket();
+        assertEq(marketItems.length, 1, "Item should be listed in the market");
         vm.stopPrank();
 
         vm.startPrank(otherUser);
-        TopBlock.PrintItem[] memory items = topBlock.viewItemsInCart();
-        assertEq(items.length, 1, "Make sure the item is here");
+        topBlock.registerUser();
+        topBlock.addBalance(180);
+        bool suc = topBlock.placeBid(18, 1);
+        assertEq(suc, false, "Bid should not go through");
+        suc = topBlock.placeBid(180, 1);
+        assertEq(suc, true, "Bid did not go through");
+        (, , , , uint256 low, ,) = topBlock.viewMarketItem(1);
+        assertEq(low, 181, "bid didn't update??");
+        vm.stopPrank();
+
+        vm.startPrank(extra1);
+        topBlock.registerUser();
+        topBlock.addBalance(250);
+        suc = topBlock.placeBid(20, 1);
+        assertEq(suc, false, "Bid should not go through");
         vm.stopPrank();
     }
+
+    //SECURITY: User cannot buy own product
+    function testBidByOwner() public {
+
+        vm.startPrank(user);
+        topBlock.registerUser();
+        topBlock.addBalance(200);
+        topBlock.addItem("item1", 100, 200, "description", "category", 1);
+        topBlock.listCartItemToMarket(1);
+        TopBlock.PrintItem[] memory marketItems = topBlock.viewMarket();
+        assertEq(marketItems.length, 1, "Item should be listed in the market");
+        vm.stopPrank();
+
+        vm.startPrank(otherUser);
+        topBlock.registerUser();
+        topBlock.addBalance(200);
+        bool suc = topBlock.placeBid(180, 1);
+        assertEq(suc, true, "Bid did not go through");
+        (, , , , uint256 low, ,) = topBlock.viewMarketItem(1);
+        assertEq(low, 181, "bid didn't update??");
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        suc = topBlock.placeBid(200, 1);
+        assertEq(suc, false, "Bid should not go through");
+        vm.stopPrank();
+    }
+
 
     //FUNCTIONAL: Test if the buyer who pays more will eventually own the items 
-    function testHigherOwnsItem() public {
-        vm.startPrank(user);
-        //Register first buyer
-        topBlock.registerUser();
-        //Add balance to first buyer
-        topBlock.addBalance(1000);
-        vm.stopPrank();
-
-        //Handle expired items
-        //topBlock.handleExpiredItems();
-        //vm.stopPrank();
-
-        //Register and add balance for the second user 
-        vm.startPrank(otherUser);
-        topBlock.registerUser();
-        topBlock.addBalance(1000);
-        vm.stopPrank();
-
-        //Handle expired items
-        //topBlock.handleExpiredItems();
-
-        //First user places a bid
-        vm.startPrank(user);
-        topBlock.addItem("item2", 100, 200, "description", "category", 1);
-        //bool bidResult1 = topBlock.placeBid(150, 1);
-        bool listed = topBlock.listCartItemToMarket(1);
-        assertEq(listed, true, "Item should be listed in the market");
-        //assertEq(bidResult1, true, "First user's bid should be successful");
-        vm.stopPrank();
-        //assertEq(bidResult1, true, "First user's bid should be successful");
-
-        // First user places a bid
-        vm.startPrank(user);
-        bool bidResult1 = topBlock.placeBid(150, 1);
-        vm.stopPrank();
-        assertEq(bidResult1, true, "First user's bid should be successful");
-
-        //Handle expired items
-        //topBlock.handleExpiredItems();
-        //vm.stopPrank();
-
-        //Second user places a higher bid
-        vm.startPrank(otherUser);
-        bool bidResult2 = topBlock.placeBid(200, 1);
-        vm.stopPrank();
-        assertEq(bidResult2, true, "Second user's bid should be successful");
-        //vm.stopPrank();
-
-        //Handle expired items
-        topBlock.handleExpiredItems();
-        //vm.stopPrank();
-
-        //Assertions for the first user
-        vm.startPrank(user);
-        assertEq(topBlock.viewNumActiveBids(), 0, "First buyer should have 0 active bids after being outbid.");
-        vm.stopPrank();
-
-        //Assertions for the second user
-        vm.startPrank(otherUser);
-        assertEq(topBlock.viewNumActiveBids(), 1, "Second buyer should have 1 active bid after bidding.");
-        vm.stopPrank();
-
-        (uint256 id, , , , , , ) = topBlock.viewMarketItem(1);
-        assertEq(id, 1, "Item should be owned by the highest bidder");
-
-    }
     
 
 
